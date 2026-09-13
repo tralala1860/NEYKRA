@@ -22,11 +22,7 @@ function normalizeUniverse(value: string): Universe | null {
 }
 
 export async function updateThemePreference(
-  theme: string,
-  // NOTE: conservé pour compat avec l'ancien ThemeSelector (migré à
-  // l'étape suivante) — chaque univers a un mode fixe depuis la
-  // migration 003, ce paramètre est donc ignoré.
-  _colorMode?: string
+  theme: string
 ): Promise<{ error?: string }> {
   const supabase = await createClient();
 
