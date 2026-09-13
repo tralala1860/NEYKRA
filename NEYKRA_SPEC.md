@@ -56,8 +56,8 @@ Binate travaille **seul**, avec un **agent IA en sessions successives** (Claude 
 | bio | text | |
 | birthdate | date | Nullable en base — la valeur est exigée au formulaire d'inscription (Phase 1) ; le trigger de création de profil la prend depuis `auth.users.raw_user_meta_data` si fournie, sinon NULL. `is_minor` est recalculé au niveau serveur (SQL + TS). |
 | is_minor | boolean | Calculé automatiquement depuis `birthdate` |
-| theme_preference | text | 'shonen' / 'seinen' / 'kawaii' |
-| color_mode | text | 'dark' / 'light' (par défaut 'dark') |
+| theme_preference | text | 'void' / 'neon_tokyo' / 'sakura' / 'inferno' / 'zen' (voir section 6) |
+| ~~color_mode~~ | ~~text~~ | **Colonne retirée (migration 003)** — chaque univers a désormais un mode de couleur fixe, plus de toggle dark/light séparé |
 | is_private | boolean | Vrai par défaut si mineur |
 | created_at | timestamp | |
 
@@ -89,7 +89,7 @@ id, user_id, type, content, read, created_at
 id, blocker_id, blocked_id, created_at
 
 ### `quotes`
-id, theme ('shonen' / 'seinen' / 'kawaii'), content, created_at
+id, theme ('void' / 'neon_tokyo' / 'sakura' / 'inferno' / 'zen'), content, created_at
 
 ---
 
@@ -104,69 +104,74 @@ Règles RLS minimales à mettre en place dès la V1 :
 
 ---
 
-## 6. Système de thèmes visuels
+## 6. Système de design visuel — 5 univers (direction artistique premium)
 
-3 thèmes au lancement, sélectionnables par l'utilisateur et sauvegardés dans `profiles.theme_preference` :
+> Direction validée : mélange anime moderne / manga / UI futuriste / cyberpunk léger / références japonaises traditionnelles, encadré par la **règle des 70/20/10** : 70% UI moderne et professionnelle, 20% identité anime/manga/japonaise, 10% effets expérimentaux. La fonctionnalité et la lisibilité priment toujours sur l'esthétique — aucun élément décoratif ne doit ressembler à un bouton, et inversement.
 
-1. **Shonen** — énergique, couleurs vives, style Naruto/One Piece
-2. **Seinen** — sombre, dramatique, style Tokyo Ghoul/AOT
-3. **Kawaii** — doux, pastel, slice of life
+### 6.1 Les 5 univers (chacun a un mode de couleur FIXE — plus de toggle dark/light séparé)
 
-*(Cyberpunk prévu en V2)*
+| Univers | Ambiance | Mode | Fond | Accent 1 | Accent 2 | Texte |
+|---|---|---|---|---|---|---|
+| **VOID** | Mystérieuse et puissante | Dark | `#0A0006` | Rouge crimson `#E11D48` | Magenta `#C026D3` | `#F5F3F7` |
+| **NEON TOKYO** | Futuriste / cyberpunk | Dark | `#06080F` | Cyan `#22D3EE` | Violet `#A78BFA` | `#E8F6FA` |
+| **SAKURA** | Élégante et douce | Light | `#FFFBFD` | Rose `#F472B6` | Violet doux `#C4B5FD` | `#3B2A35` |
+| **INFERNO** | Énergique | Dark | `#0D0704` | Orange `#FB923C` | Rouge `#EF4444` | `#FFF3EA` |
+| **ZEN** | Minimaliste, traditionnelle japonaise | Light | `#FAFAF8` (papier washi) | Rouge japonais `#BC002D` | Noir encre `#1A1A1A` | `#1A1A1A` |
 
-Chaque thème = variables CSS (couleurs, police d'accent, style des bordures). Transition animée entre thèmes via Framer Motion.
+*(VOID fusionne l'ancien Seinen, INFERNO fusionne l'ancien Shonen, SAKURA fusionne l'ancien Kawaii. NEON TOKYO et ZEN sont nouveaux. L'ancien système à 3 thèmes × mode dark/light séparé — Shonen/Seinen/Kawaii — est entièrement retiré et remplacé par ces 5 univers.)*
 
-### 6.1 Palettes de couleurs
+**Univers par défaut à l'inscription** : VOID.
 
-#### Shonen
-| Rôle | Couleur (Dark) | Couleur (Light) |
-|---|---|---|
-| Accent principal | `#ff6b35` (orange vif) | `#e85d26` (orange vif) |
-| Fond | `#1a1a2e` (bleu nuit) | `#fff8f0` (crème) |
-| Surface | `#252542` | `#fff` |
-| Texte principal | `#ffffff` | `#1a1a2e` |
-| Texte secondaire | `#a0a0b0` | `#606070` |
-| Bordure | `rgba(255,107,53,0.2)` | `rgba(232,93,38,0.2)` |
+### 6.2 Hiérarchie visuelle (priorité stricte)
+1. Fonctionnalité
+2. Lisibilité
+3. Navigation
+4. Identité visuelle
+5. Effets visuels
 
-#### Seinen
-| Rôle | Couleur (Dark) | Couleur (Light) |
-|---|---|---|
-| Accent principal | `#4a90d9` (bleu acier) | `#2c6aaa` (bleu profond) |
-| Fond | `#0d0d12` (noir charbon) | `#f0f0f2` (gris clair) |
-| Surface | `#181820` | `#ffffff` |
-| Texte principal | `#e0e0e8` | `#1a1a2e` |
-| Texte secondaire | `#707080` | `#707080` |
-| Bordure | `rgba(74,144,217,0.2)` | `rgba(44,106,170,0.2)` |
+### 6.3 Codes visuels manga à utiliser (avec parcimonie — signature, pas systématique)
+- Trame de points (halftone) très légère en fond de certaines sections (opacity ~0.06–0.1), en CSS pur
+- Cadres/cartes avec bordures franches et légère asymétrie (rotation subtile, jamais appliquée à tout)
+- Lignes dynamiques (speed lines) en arrière-plan de titres clés, discrètes
+- Petites annotations façon "numéro de chapitre" pour la navigation principale (ex: 01 — ACCUEIL, 02 — FIL D'ACTUALITÉ), doit rester compréhensible sans culture manga
+- Glow contrôlé sur les éléments interactifs actifs uniquement (pas partout)
 
-#### Kawaii
-| Rôle | Couleur (Dark) | Couleur (Light) |
-|---|---|---|
-| Accent principal | `#ff8fab` (rose pastel) | `#ff6b8a` (rose vif) |
-| Fond | `#1a1525` (violet profond) | `#faf5ff` (lavande) |
-| Surface | `#251d35` | `#ffffff` |
-| Texte principal | `#f0e6ff` | `#1a1525` |
-| Texte secondaire | `#a090b0` | `#807090` |
-| Bordure | `rgba(255,143,171,0.2)` | `rgba(255,107,138,0.2)` |
+**Interdits explicites** : personnages d'anime existants, kanji décoratifs sans fonction, animation permanente sur tous les éléments, néon sur tout, texte surdimensionné illisible, décorations confondables avec des boutons.
 
-### 6.2 Mode sombre / clair
+### 6.4 Typographie
+- Titres/boutons/badges : police impact à accents français corrects (*Anton* ou *Passion One*), poids 400 uniquement (Anton n'a pas de graisse 700)
+- Texte courant : *Inter* ou *Rubik*
 
-En plus du thème, chaque utilisateur peut choisir entre le mode sombre (`dark`) et le mode clair (`light`), sauvegardé dans `profiles.color_mode` (par défaut : `dark`).
+### 6.5 Personnalisation utilisateur (page /settings)
+Réglages simples avec valeurs par défaut intelligentes — l'utilisateur qui ne configure rien doit avoir une expérience impeccable :
+- Choix de l'univers (5 options)
+- Intensité des effets (réduit / normal / élevé)
+- Niveau d'animations (réduit / normal), avec respect de `prefers-reduced-motion`
+- *(Personnalisation fine de la couleur d'accent et des particules : reportée à une itération ultérieure, pas en V1 du design system)*
 
-Le mode agit comme un override : il change uniquement les valeurs de fond, surface, texte et bordure tout en conservant l'accent du thème choisi.
+### 6.6 Animations
+Subtiles, fluides, toujours justifiées par une raison fonctionnelle : transitions douces entre pages, micro-interactions sur boutons, hover élégant sur cartes, transition de changement d'univers. Jamais d'animation qui ralentit le clic ou bloque la navigation. Option de réduction/désactivation toujours disponible.
 
-### 6.3 Implémentation technique
+### 6.7 Responsive
+Effets réduits sur mobile, animations simplifiées, CTA et navigation toujours visibles et clairs. Pas de design magnifique uniquement sur desktop avec un mobile dégradé.
 
-- Variables CSS définies dans `src/app/globals.css` sous forme de blocs `[data-theme="shonen"][data-mode="dark"]`, `[data-theme="shonen"][data-mode="light"]`, etc.
-- Mapping Tailwind `@theme` pour utiliser les variables CSS via les noms `bg-accent`, `text-background`, `border-border`, etc.
-- Attributs `data-theme` et `data-mode` sur la balise `<html>` (lancé depuis `src/app/layout.tsx` avec les valeurs par défaut Shonen+Dark).
-- Contexte React `ThemeProvider` (`src/lib/theme/ThemeProvider.tsx`) pour la gestion côté client : lecture des préférences depuis `profiles`, mise à jour des attributs `data-theme`/`data-mode`, animation de transition via `framer-motion`.
-- Page `/settings` (`src/app/settings/page.tsx`) avec sélecteur de thème (3 boutons) et bascule sombre/clair (2 boutons), sauvegarde via Server Action `updateThemePreference`.
-- Composants UI réutilisables (`src/components/ui/`) : `Button`, `Card`, `Badge` — tous utilisant les variables CSS et les fonts Anton (display) / Inter (corps).
+### 6.8 Accessibilité
+Contraste suffisant sur les 5 univers, tailles de boutons raisonnables, états hover/focus/active visibles, navigation compréhensible sans connaître le concept artistique.
+
+### 6.9 Implémentation technique
+- Un seul attribut sur `<html>` : `data-universe="void|neon-tokyo|sakura|inferno|zen"` (remplace les anciens `data-theme` + `data-mode` — le mode dark/light est désormais implicite à chaque univers)
+- Variables CSS définies dans `src/app/globals.css` sous forme de blocs `[data-universe="void"]`, `[data-universe="sakura"]`, etc. (`--neykra-bg`, `--neykra-accent-1`, `--neykra-accent-2`, `--neykra-text`)
+- Mapping Tailwind `@theme` pour utiliser les variables CSS via des noms sémantiques (`bg-accent`, `text-background`, `border-border`, etc.)
+- Contexte React `ThemeProvider` (`src/lib/theme/ThemeProvider.tsx`) mis à jour pour gérer 5 univers au lieu de 3 thèmes × 2 modes
+- Page `/settings` (`src/app/settings/page.tsx`) : sélecteur des 5 univers + réglages d'intensité effets/animations, sauvegarde via Server Action `updateThemePreference`
+- Composants UI réutilisables (`src/components/ui/`) : `Button`, `Card`, `Badge` — tous utilisant les variables CSS et les fonts Anton (display, poids 400 uniquement) / Inter (corps)
+- **Migration 003** (`supabase/migrations/003_theme_universes.sql`) : met à jour la contrainte check sur `theme_preference`, migre les valeurs existantes (shonen→inferno, seinen→void, kawaii→sakura), et supprime la colonne `color_mode`
+- Transition animée en fondu (Framer Motion) au changement d'univers, structure et navigation inchangées
 
 ## 7. Système de citations manga
 
 - Citations **100% originales** (jamais de citations réelles de mangas existants — droit d'auteur)
-- Stockées dans la table `quotes`, filtrées par thème actif de l'utilisateur
+- Stockées dans la table `quotes`, filtrées par univers actif de l'utilisateur (`theme` = une des 5 valeurs de la section 6.1)
 - Apparition **aléatoire**, pas systématique (~1 chance sur 4 par chargement de page)
 - Position fixe et discrète (coin de sidebar ou bandeau furtif), jamais intrusive sur le contenu principal
 - Ne doit pas apparaître sur toutes les pages
@@ -263,16 +268,25 @@ Le mode agit comme un override : il change uniquement les valeurs de fond, surfa
 
 ## 9. Feuille de route (phases de développement)
 
-### Phase 0 — Fondations (à faire en premier)
-- [ ] Créer le projet Supabase
-- [ ] Créer le projet Next.js + connecter Supabase
-- [ ] Mettre en place Git/GitHub
-- [ ] Créer toutes les tables + RLS de base
+### Phase 0 — Fondations ✅ TERMINÉE
+- [x] Créer le projet Supabase
+- [x] Créer le projet Next.js + connecter Supabase
+- [x] Mettre en place Git/GitHub
+- [x] Créer toutes les tables + RLS de base
 
-### Phase 1 — Authentification
-- [ ] Inscription (avec date de naissance obligatoire)
-- [ ] Connexion
-- [ ] Détection automatique compte mineur + paramètres par défaut
+### Phase 1 — Authentification ✅ TERMINÉE
+- [x] Inscription (avec date de naissance obligatoire)
+- [x] Connexion
+- [x] Détection automatique compte mineur + paramètres par défaut
+
+### Phase 1bis — Fondation du système de design ✅ TERMINÉE (v1 à 3 thèmes), EN COURS DE MIGRATION vers 5 univers
+- [x] Variables CSS (version initiale 3 thèmes × dark/light — en cours de remplacement)
+- [x] Polices Anton/Inter intégrées
+- [x] Composants UI de base (Button, Card, Badge)
+- [x] Page /settings
+- [ ] **Migration vers le système 5 univers (section 6)** — migration 003, nouveaux tokens CSS, ThemeProvider mis à jour
+- [ ] Effets visuels manga (halftone, cadres, speed lines) appliqués aux composants existants
+- [ ] Réglages d'intensité effets/animations dans /settings
 
 ### Phase 2 — Profil & fil d'actualité
 - [ ] Page de profil
@@ -290,10 +304,9 @@ Le mode agit comme un override : il change uniquement les valeurs de fond, surfa
 - [ ] Conversations 1-to-1
 - [ ] Messages en temps réel (Supabase Realtime)
 
-### Phase 5 — Habillage manga
-- [ ] Système de thèmes (3 thèmes)
-- [ ] Système de citations aléatoires
-- [ ] Animations Framer Motion sur tout le site
+### Phase 5 — Citations & animations avancées
+- [ ] Système de citations aléatoires (table quotes)
+- [ ] Animations Framer Motion sur tout le site (posts, likes, transitions de page, messages)
 
 ### Phase 6 — Quiz Otaku & gamification
 - [ ] Tables otaku_status / quiz_questions / quiz_attempts
@@ -306,15 +319,16 @@ Le mode agit comme un override : il change uniquement les valeurs de fond, surfa
 ### Phase 7 (V2, plus tard)
 - [ ] Stories
 - [ ] Notifications
-- [ ] Thème Cyberpunk
 - [ ] Modération avancée (signalement)
 - [ ] Onboarding animé façon prologue d'anime
+- [ ] Navigation façon "chapitres" (01 — ACCUEIL, 02 — FIL D'ACTUALITÉ...)
+- [ ] Personnalisation fine (couleur d'accent, particules)
 
 ---
 
 ## 9bis. Décisions finales complémentaires
 
-- **Thème par défaut** : Shonen à l'inscription, modifiable ensuite dans les paramètres
+- **Univers par défaut** : VOID à l'inscription, modifiable ensuite dans les paramètres
 - **Médias autorisés** : images, vidéos courtes, GIFs, texte
 - **Recherche d'utilisateurs** : incluse dès la V1 (barre de recherche)
 - **Pages légales** : CGU + Politique de confidentialité en version simple dès la V1 (à renforcer plus tard — important car l'app accueille des mineurs et traite des données personnelles)
@@ -324,8 +338,8 @@ Le mode agit comme un override : il change uniquement les valeurs de fond, surfa
 ## 10. Branding NEYKRA
 
 - Logo : à créer (pas encore existant)
-- Couleurs officielles : à définir (dépendront du thème choisi par défaut)
-- Statut : identité visuelle à construire en parallèle du développement
+- Couleurs officielles : celles de l'univers VOID par défaut (rouge crimson `#E11D48` / magenta `#C026D3` sur fond noir profond), les 4 autres univers déclinent l'identité
+- Statut : identité visuelle en cours de construction (système 5 univers, section 6)
 
 ---
 
