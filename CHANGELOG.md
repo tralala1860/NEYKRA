@@ -3,6 +3,18 @@
 > À mettre à jour à la fin de chaque session de développement (Claude Code, Cline ou autre).
 > Format : date, ce qui a été fait, ce qui reste à faire / bugs connus.
 
+## [13/09/2026] — Session 4 — Migration vers le système 5 univers (fondations)
+
+- **Migration `supabase/migrations/003_theme_universes.sql` (À EXÉCUTER dans le SQL Editor Supabase)** : supprime l'ancien CHECK sur `profiles.theme_preference`, migre les données (`shonen` → `inferno`, `seinen` → `void`, `kawaii` → `sakura`, toute autre valeur → `void`), pose le défaut `theme_preference = 'void'`, ajoute le CHECK 5 univers (`void`/`neon_tokyo`/`sakura`/`inferno`/`zen`), supprime la colonne `profiles.color_mode` (+ ses CHECK résiduels). Idempotente (ré-exécutable sans erreur).
+- **CSS `src/app/globals.css`** : pilotage par un seul attribut `data-universe="void|neon-tokyo|sakura|inferno|zen"` (`neon_tokyo` avec underscore aussi accepté), 5 blocs univers avec les codes couleur exacts de NEYKRA_SPEC.md §6 (`--neykra-bg`, `--neykra-accent-1`, `--neykra-accent-2`, `--neykra-text`), défaut `:root` = VOID, mapping Tailwind `@theme` étendu (`bg-neykra-bg`, `text-neykra-text`, …). Anciennes variables (`--background`, `--accent`, …) conservées en alias mappés par univers + mapping `data-theme="shonen|seinen|kawaii"` pour ne pas casser les composants existants.
+- **Types `src/lib/theme/types.ts`** : nouveau type `Universe` + tableau `UNIVERSES` (5 entrées) + `LEGACY_THEME_TO_UNIVERSE` ; `Theme`/`ColorMode`/`THEMES`/`COLOR_MODES` conservés en `@deprecated` pour compatibilité.
+- **ThemeProvider** : nouvel état `universe` + `updateUniverse`/`transitionUniverse`, attribut `data-universe` appliqué sur `<html>` (+ `data-theme`/`data-mode="dark"` en compat), normalisation des anciennes valeurs, lecture/écriture `theme_preference` uniquement (plus de `color_mode`). `updateColorMode` conservé en no-op déprécié.
+- **Server Action `src/app/settings/actions.ts` (fondation, pas de visuel)** : `updateThemePreference` accepte les 5 univers + normalise les 3 anciens thèmes, n'écrit plus `color_mode` (2e param conservé optionnel/ignoré) ; `getProfilePreferences` ne lit plus que `theme_preference`.
+- **Layout `src/app/layout.tsx`** : défaut `<html data-universe="void" data-theme="void" data-mode="dark">`.
+- **Schéma `supabase/schema.sql`** : `profiles.theme_preference` défaut `'void'` + CHECK 5 univers, colonne `color_mode` retirée (aligné sur la migration 003 pour les fresh installs).
+- **NON touchés (étape séparée après validation)** : `Button`/`Card`/`Badge`, `ThemeSelector.tsx`, `settings/page.tsx` et autres pages.
+- **À FAIRE côté humain** : 1) exécuter `supabase/migrations/003_theme_universes.sql` dans le SQL Editor Supabase ; 2) lancer `npm run build` en local (l'outil d'exécution de commandes était en panne pendant cette session — build NON vérifié, à valider avant de merger) ; 3) `git add -A && git commit -m "feat: migration vers systeme 5 univers"` ; 4) étape suivante : migrer les composants visuels (`ThemeSelector` 5 univers, `Button`/`Card`/`Badge`, pages) + effets manga + réglages d'intensité dans `/settings`.
+
 ## [13/09/2026] — Session 3 — Phase 1bis : Fondation du système de design
 
 - **Fonts** : remplacement de Geist par Anton (display, headers) + Inter (body) via `next/font/google` dans `src/app/layout.tsx`.

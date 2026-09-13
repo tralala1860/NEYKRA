@@ -27,7 +27,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="fr"
       className={`${anton.variable} ${inter.variable} h-full antialiased`}
-      data-theme="shonen"
+      data-universe="void"
+      data-theme="void"
       data-mode="dark"
     >
       <body className="min-h-full flex flex-col">

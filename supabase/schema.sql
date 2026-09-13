@@ -30,10 +30,8 @@ create table public.profiles (
   bio               text,
   birthdate         date,
   is_minor          boolean not null default false,
-  theme_preference  text not null default 'shonen'
-                    check (theme_preference in ('shonen', 'seinen', 'kawaii')),
-   color_mode        text not null default 'dark'
-                     check (color_mode in ('dark', 'light')),
+  theme_preference  text not null default 'void'
+                    check (theme_preference in ('void', 'neon_tokyo', 'sakura', 'inferno', 'zen')),
   is_private        boolean not null default false,
   created_at        timestamptz not null default now()
 );

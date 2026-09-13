@@ -1,12 +1,32 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+
+/** Nouveaux univers (migration 003) + anciennes valeurs pour compat. */
+const UNIVERSE_VALUES = ["void", "neon_tokyo", "sakura", "inferno", "zen"] as const;
+type Universe = (typeof UNIVERSE_VALUES)[number];
+
+const LEGACY_TO_UNIVERSE: Record<string, Universe> = {
+  shonen: "inferno",
+  seinen: "void",
+  kawaii: "sakura",
+};
+
+function normalizeUniverse(value: string): Universe | null {
+  if ((UNIVERSE_VALUES as readonly string[]).includes(value)) {
+    return value as Universe;
+  }
+  const mapped = LEGACY_TO_UNIVERSE[value];
+  return mapped ?? null;
+}
 
 export async function updateThemePreference(
   theme: string,
-  colorMode: string
+  // NOTE: conservé pour compat avec l'ancien ThemeSelector (migré à
+  // l'étape suivante) — chaque univers a un mode fixe depuis la
+  // migration 003, ce paramètre est donc ignoré.
+  _colorMode?: string
 ): Promise<{ error?: string }> {
   const supabase = await createClient();
 
@@ -18,21 +38,18 @@ export async function updateThemePreference(
     return { error: "Non connecté" };
   }
 
-  // Validation des valeurs
-  const validThemes = ["shonen", "seinen", "kawaii"];
-  const validModes = ["dark", "light"];
+  // Accepte les 5 univers + les 3 anciens thèmes (normalisés).
+  const universe = normalizeUniverse(theme);
 
-  if (!validThemes.includes(theme)) {
+  if (!universe) {
     return { error: "Thème invalide" };
   }
 
-  if (!validModes.includes(colorMode)) {
-    return { error: "Mode de couleur invalide" };
-  }
-
+  // NOTE: color_mode n'est plus écrit — colonne supprimée par la
+  // migration 003 (requête tolérante : theme_preference uniquement).
   const { error } = await supabase
     .from("profiles")
-    .update({ theme_preference: theme, color_mode: colorMode })
+    .update({ theme_preference: universe })
     .eq("id", user.id);
 
   if (error) {
@@ -60,9 +77,10 @@ export async function getProfilePreferences() {
     return null;
   }
 
+  // NOTE: theme_preference uniquement (color_mode supprimé, migration 003).
   const { data: profile, error } = await supabase
     .from("profiles")
-    .select("theme_preference, color_mode")
+    .select("theme_preference")
     .eq("id", user.id)
     .single();
 

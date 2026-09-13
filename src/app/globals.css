@@ -1,41 +1,54 @@
 @import "tailwindcss";
 
 /* =====================================================================
- * NEYKRA — Système de variables CSS (Phase 1bis)
- * 6 combinaisons : 3 thèmes (shonen/seinen/kawaii) × 2 modes (dark/light)
- * Piloté par data-theme et data-mode sur la balise <html>
+ * NEYKRA — Système de variables CSS (migration 003 : 5 univers)
+ * 5 univers à mode fixe : void / neon_tokyo / sakura / inferno / zen
+ * Piloté par UN SEUL attribut data-universe sur la balise <html> :
+ *   data-universe="void|neon-tokyo|sakura|inferno|zen"
+ * (neon_tokyo accepté aussi avec underscore, côté base de données.)
+ * Tokens requis : --neykra-bg, --neykra-accent-1, --neykra-accent-2,
+ * --neykra-text (valeurs exactes NEYKRA_SPEC.md section 6).
+ * Les anciennes variables (--background, --accent, ...) sont conservées
+ * en alias mappés sur chaque univers pour ne pas casser les composants
+ * visuels existants (migrés dans une étape séparée).
  * =====================================================================
 
-/* --- Variables par défaut (Shonen + Dark, la combinaison par défaut) --- */
+/* --- Variables par défaut = VOID (univers par défaut à l'inscription) --- */
 :root {
-  /* Couleurs de base */
-  --background: #1a1a2e;
-  --background-elevated: #16213e;
-  --foreground: #eaeaea;
-  --foreground-muted: #a0a0b0;
-  --foreground-subtle: #6b6b7b;
+  /* Tokens officiels NEYKRA (section 6) — VOID */
+  --neykra-bg: #050508;
+  --neykra-text: #f5f3ff;
+  --neykra-accent-1: #e11d48;
+  --neykra-accent-2: #c026d3;
 
-  /* Couleurs Shonen (énergique, vives — style Naruto/One Piece) */
-  --accent: #ff6b35;
-  --accent-hover: #ff8c5a;
-  --accent-subtle: rgba(255, 107, 53, 0.15);
-  --accent-glow: rgba(255, 107, 53, 0.4);
+  /* Couleurs de base (alias legacy mappés sur VOID) */
+  --background: #050508;
+  --background-elevated: #0d0d14;
+  --foreground: #f5f3ff;
+  --foreground-muted: #a8a3c7;
+  --foreground-subtle: #6b6584;
+
+  /* Couleurs VOID (alias legacy : accent principal = crimson) */
+  --accent: #e11d48;
+  --accent-hover: #f43f5e;
+  --accent-subtle: rgba(225, 29, 72, 0.15);
+  --accent-glow: rgba(225, 29, 72, 0.4);
 
   /* Bordures et décorations */
   --border: rgba(255, 255, 255, 0.12);
   --border-hover: rgba(255, 255, 255, 0.25);
   --border-subtle: rgba(255, 255, 255, 0.06);
 
-  /* Surfaces */
-  --surface: #1a1a2e;
-  --surface-hover: #22223a;
-  --surface-active: #2a2a45;
+  /* Surfaces (VOID) */
+  --surface: #050508;
+  --surface-hover: #0d0d14;
+  --surface-active: #14141c;
 
-  /* Texte spécifique */
-  --text-primary: #eaeaea;
-  --text-secondary: #a0a0b0;
-  --text-tertiary: #6b6b7b;
-  --text-inverse: #1a1a2e;
+  /* Texte spécifique (VOID) */
+  --text-primary: #f5f3ff;
+  --text-secondary: #a8a3c7;
+  --text-tertiary: #6b6584;
+  --text-inverse: #050508;
 
   /* Couleurs specifiques aux composants */
   --color-error: #ff4757;
@@ -61,155 +74,253 @@
 }
 
 /* =====================================================================
- * THÈME SEINEN — Sombre, dramatique (Tokyo Ghoul/AOT)
+ * UNIVERS VOID — Noir profond, rouge crimson (univers par defaut)
+ * Spec section 6 : bg #050508, accent-1 #E11D48, accent-2 #C026D3,
+ * texte #F5F3FF
  * ===================================================================== */
 
-/* --- Seinen + Dark --- */
-html[data-theme="seinen"][data-mode="dark"] {
-  --background: #0d0d12;
-  --background-elevated: #14141a;
-  --foreground: #c8c8d0;
-  --foreground-muted: #6a6a7a;
-  --foreground-subtle: #4a4a55;
+html[data-universe="void"] {
+  --neykra-bg: #050508;
+  --neykra-text: #f5f3ff;
+  --neykra-accent-1: #e11d48;
+  --neykra-accent-2: #c026d3;
 
-  --accent: #4a90d9;
-  --accent-hover: #5ba0e9;
-  --accent-subtle: rgba(74, 144, 217, 0.15);
-  --accent-glow: rgba(74, 144, 217, 0.35);
+  --background: #050508;
+  --background-elevated: #0d0d14;
+  --foreground: #f5f3ff;
+  --foreground-muted: #a8a3c7;
+  --foreground-subtle: #6b6584;
 
-  --border: rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(255, 255, 255, 0.18);
-  --border-subtle: rgba(255, 255, 255, 0.04);
+  --accent: #e11d48;
+  --accent-hover: #f43f5e;
+  --accent-subtle: rgba(225, 29, 72, 0.15);
+  --accent-glow: rgba(225, 29, 72, 0.4);
 
-  --surface: #0d0d12;
-  --surface-hover: #181820;
-  --surface-active: #202028;
+  --border: rgba(255, 255, 255, 0.12);
+  --border-hover: rgba(255, 255, 255, 0.25);
+  --border-subtle: rgba(255, 255, 255, 0.06);
 
-  --text-primary: #c8c8d0;
-  --text-secondary: #6a6a7a;
-  --text-tertiary: #4a4a55;
-  --text-inverse: #0d0d12;
+  --surface: #050508;
+  --surface-hover: #0d0d14;
+  --surface-active: #14141c;
 
-  --color-error: #e74c3c;
-  --color-success: #2ecc71;
-  --color-warning: #f1c40f;
-  --color-info: #3498db;
+  --text-primary: #f5f3ff;
+  --text-secondary: #a8a3c7;
+  --text-tertiary: #6b6584;
+  --text-inverse: #050508;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 25px var(--accent-glow);
-}
+  --color-error: #ff4757;
+  --color-success: #2ed573;
+  --color-warning: #ffa502;
+  --color-info: #1e90ff;
 
-/* --- Seinen + Light --- */
-html[data-theme="seinen"][data-mode="light"] {
-  --background: #f0f0f2;
-  --background-elevated: #e8e8ea;
-  --foreground: #1a1a24;
-  --foreground-muted: #4a4a5a;
-  --foreground-subtle: #7a7a88;
-
-  --accent: #2c6aaa;
-  --accent-hover: #1e5a94;
-  --accent-subtle: rgba(44, 106, 170, 0.12);
-  --accent-glow: rgba(44, 106, 170, 0.25);
-
-  --border: rgba(0, 0, 0, 0.12);
-  --border-hover: rgba(0, 0, 0, 0.22);
-  --border-subtle: rgba(0, 0, 0, 0.06);
-
-  --surface: #f0f0f2;
-  --surface-hover: #e8e8ea;
-  --surface-active: #e0e0e6;
-
-  --text-primary: #1a1a24;
-  --text-secondary: #4a4a5a;
-  --text-tertiary: #7a7a88;
-  --text-inverse: #f0f0f2;
-
-  --color-error: #c0392b;
-  --color-success: #27ae60;
-  --color-warning: #f39c12;
-  --color-info: #2980b9;
-
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.12);
-  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
-  --shadow-glow: 0 0 25px var(--accent-glow);
-}
-
-/* --- Kawaii + Dark --- */
-html[data-theme="kawaii"][data-mode="dark"] {
-  --background: #1a1525;
-  --background-elevated: #201a2e;
-  --foreground: #e8d8f0;
-  --foreground-muted: #b0a0c0;
-  --foreground-subtle: #7a6a8a;
-
-  --accent: #ff8fab;
-  --accent-hover: #ffaad5;
-  --accent-subtle: rgba(255, 143, 171, 0.15);
-  --accent-glow: rgba(255, 143, 171, 0.35);
-
-  --border: rgba(255, 255, 255, 0.1);
-  --border-hover: rgba(255, 255, 255, 0.22);
-  --border-subtle: rgba(255, 255, 255, 0.05);
-
-  --surface: #1a1525;
-  --surface-hover: #241d30;
-  --surface-active: #2d2538;
-
-  --text-primary: #e8d8f0;
-  --text-secondary: #b0a0c0;
-  --text-tertiary: #7a6a8a;
-  --text-inverse: #1a1525;
-
-  --color-error: #ff6b8a;
-  --color-success: #7edc8a;
-  --color-warning: #ffc857;
-  --color-info: #7eb8ff;
-
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.35);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.4);
   --shadow-glow: 0 0 20px var(--accent-glow);
 }
 
-/* --- Kawaii + Light --- */
-html[data-theme="kawaii"][data-mode="light"] {
-  --background: #faf5ff;
-  --background-elevated: #f5efea;
-  --foreground: #2d1f3d;
-  --foreground-muted: #5a4a6e;
-  --foreground-subtle: #8a7a9e;
+/* =====================================================================
+ * UNIVERS NEON TOKYO — Nuit cyberpunk, cyan electrique + rose neon
+ * Spec section 6 : bg #0A0A1A, accent-1 #00F0FF, accent-2 #FF2E9A,
+ * texte #E8F6FF
+ * ===================================================================== */
 
-  --accent: #ff6b8a;
-  --accent-hover: #ff5277;
-  --accent-subtle: rgba(255, 107, 138, 0.12);
-  --accent-glow: rgba(255, 107, 138, 0.25);
+html[data-universe="neon-tokyo"],
+html[data-universe="neon_tokyo"] {
+  --neykra-bg: #0a0a1a;
+  --neykra-text: #e8f6ff;
+  --neykra-accent-1: #00f0ff;
+  --neykra-accent-2: #ff2e9a;
 
-  --border: rgba(0, 0, 0, 0.1);
-  --border-hover: rgba(0, 0, 0, 0.2);
-  --border-subtle: rgba(0, 0, 0, 0.05);
+  --background: #0a0a1a;
+  --background-elevated: #12122a;
+  --foreground: #e8f6ff;
+  --foreground-muted: #9db8d6;
+  --foreground-subtle: #5f7891;
 
-  --surface: #faf5ff;
-  --surface-hover: #f5efea;
-  --surface-active: #efe5f5;
+  --accent: #00f0ff;
+  --accent-hover: #4df5ff;
+  --accent-subtle: rgba(0, 240, 255, 0.15);
+  --accent-glow: rgba(0, 240, 255, 0.4);
 
-  --text-primary: #2d1f3d;
-  --text-secondary: #5a4a6e;
-  --text-tertiary: #8a7a9e;
-  --text-inverse: #faf5ff;
+  --border: rgba(0, 240, 255, 0.16);
+  --border-hover: rgba(0, 240, 255, 0.32);
+  --border-subtle: rgba(0, 240, 255, 0.08);
+
+  --surface: #0a0a1a;
+  --surface-hover: #12122a;
+  --surface-active: #1a1a38;
+
+  --text-primary: #e8f6ff;
+  --text-secondary: #9db8d6;
+  --text-tertiary: #5f7891;
+  --text-inverse: #0a0a1a;
+
+  --color-error: #ff4757;
+  --color-success: #2ed573;
+  --color-warning: #ffa502;
+  --color-info: #00f0ff;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 20px var(--accent-glow);
+}
+
+/* --- SAKURA (printaniere, claire) --- */
+html[data-universe="sakura"] {
+  --neykra-bg: #fff5f7;
+  --neykra-text: #4a1d3f;
+  --neykra-accent-1: #ec4899;
+  --neykra-accent-2: #8b5cf6;
+
+  --background: #fff5f7;
+  --background-elevated: #ffeef2;
+  --foreground: #4a1d3f;
+  --foreground-muted: #8a5a7d;
+  --foreground-subtle: #b894a8;
+
+  --accent: #ec4899;
+  --accent-hover: #db2777;
+  --accent-subtle: rgba(236, 72, 153, 0.12);
+  --accent-glow: rgba(236, 72, 153, 0.25);
+
+  --border: rgba(74, 29, 63, 0.12);
+  --border-hover: rgba(74, 29, 63, 0.22);
+  --border-subtle: rgba(74, 29, 63, 0.06);
+
+  --surface: #fff5f7;
+  --surface-hover: #ffeef2;
+  --surface-active: #ffe4ea;
+
+  --text-primary: #4a1d3f;
+  --text-secondary: #8a5a7d;
+  --text-tertiary: #b894a8;
+  --text-inverse: #fff5f7;
 
   --color-error: #e55a73;
   --color-success: #4caf50;
   --color-warning: #ffb74d;
   --color-info: #4d94ff;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.12);
+  --shadow-sm: 0 1px 2px rgba(74, 29, 63, 0.08);
+  --shadow-md: 0 4px 6px rgba(74, 29, 63, 0.1);
+  --shadow-lg: 0 10px 25px rgba(74, 29, 63, 0.12);
   --shadow-glow: 0 0 20px var(--accent-glow);
+}
+
+/* --- INFERNO (feu et braise, sombre) --- */
+html[data-universe="inferno"] {
+  --neykra-bg: #0d0603;
+  --neykra-text: #fff7ed;
+  --neykra-accent-1: #f97316;
+  --neykra-accent-2: #fbbf24;
+
+  --background: #0d0603;
+  --background-elevated: #170c06;
+  --foreground: #fff7ed;
+  --foreground-muted: #c9a88f;
+  --foreground-subtle: #7d6552;
+
+  --accent: #f97316;
+  --accent-hover: #fb923c;
+  --accent-subtle: rgba(249, 115, 22, 0.15);
+  --accent-glow: rgba(249, 115, 22, 0.4);
+
+  --border: rgba(255, 247, 237, 0.12);
+  --border-hover: rgba(255, 247, 237, 0.25);
+  --border-subtle: rgba(255, 247, 237, 0.06);
+
+  --surface: #0d0603;
+  --surface-hover: #170c06;
+  --surface-active: #221109;
+
+  --text-primary: #fff7ed;
+  --text-secondary: #c9a88f;
+  --text-tertiary: #7d6552;
+  --text-inverse: #0d0603;
+
+  --color-error: #ff4757;
+  --color-success: #2ed573;
+  --color-warning: #fbbf24;
+  --color-info: #1e90ff;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 20px var(--accent-glow);
+}
+
+/* --- ZEN (jardin apaise, clair) --- */
+html[data-universe="zen"] {
+  --neykra-bg: #f7f5ef;
+  --neykra-text: #1c1917;
+  --neykra-accent-1: #4d7c0f;
+  --neykra-accent-2: #b45309;
+
+  --background: #f7f5ef;
+  --background-elevated: #efeadf;
+  --foreground: #1c1917;
+  --foreground-muted: #57534e;
+  --foreground-subtle: #8a8580;
+
+  --accent: #4d7c0f;
+  --accent-hover: #3f6212;
+  --accent-subtle: rgba(77, 124, 15, 0.12);
+  --accent-glow: rgba(77, 124, 15, 0.22);
+
+  --border: rgba(28, 25, 23, 0.12);
+  --border-hover: rgba(28, 25, 23, 0.22);
+  --border-subtle: rgba(28, 25, 23, 0.06);
+
+  --surface: #f7f5ef;
+  --surface-hover: #efeadf;
+  --surface-active: #e7e0d2;
+
+  --text-primary: #1c1917;
+  --text-secondary: #57534e;
+  --text-tertiary: #8a8580;
+  --text-inverse: #f7f5ef;
+
+  --color-error: #c0392b;
+  --color-success: #4d7c0f;
+  --color-warning: #b45309;
+  --color-info: #2980b9;
+
+  --shadow-sm: 0 1px 2px rgba(28, 25, 23, 0.08);
+  --shadow-md: 0 4px 6px rgba(28, 25, 23, 0.1);
+  --shadow-lg: 0 10px 25px rgba(28, 25, 23, 0.12);
+  --shadow-glow: 0 0 20px var(--accent-glow);
+}
+
+/* =====================================================================
+ * COMPATIBILITE ANCIEN SYSTEME (data-theme / data-mode)
+ * Les composants visuels existants seront migres dans une etape separee.
+ * En attendant, on mappe les anciens selecteurs vers les univers cibles
+ * de la migration de donnees 003 :
+ * shonen -> inferno, seinen -> void, kawaii -> sakura.
+ * ===================================================================== */
+
+html[data-theme="shonen"] {
+  --neykra-bg: #0d0603;
+  --neykra-text: #fff7ed;
+  --neykra-accent-1: #f97316;
+  --neykra-accent-2: #fbbf24;
+}
+
+html[data-theme="seinen"] {
+  --neykra-bg: #050508;
+  --neykra-text: #f5f3ff;
+  --neykra-accent-1: #e11d48;
+  --neykra-accent-2: #c026d3;
+}
+
+html[data-theme="kawaii"] {
+  --neykra-bg: #fff5f7;
+  --neykra-text: #4a1d3f;
+  --neykra-accent-1: #ec4899;
+  --neykra-accent-2: #8b5cf6;
 }
 
 /* =====================================================================
@@ -239,6 +350,11 @@ body {
  * ===================================================================== */
 
 @theme inline {
+  --color-neykra-bg: var(--neykra-bg);
+  --color-neykra-text: var(--neykra-text);
+  --color-neykra-accent-1: var(--neykra-accent-1);
+  --color-neykra-accent-2: var(--neykra-accent-2);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-foreground-muted: var(--foreground-muted);

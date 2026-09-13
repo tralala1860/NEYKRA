@@ -1,9 +1,25 @@
 "use client";
 
 import { forwardRef, type HTMLAttributes } from "react";
-import { motion } from "framer-motion";
+import { motion, type HTMLMotionProps } from "framer-motion";
 
-type CardProps = HTMLAttributes<HTMLDivElement> & {
+type ConflictingHTMLProps =
+  | "onDrag"
+  | "onDragStart"
+  | "onDragEnd"
+  | "onDragEnter"
+  | "onDragLeave"
+  | "onDragOver"
+  | "onDrop"
+  | "onAnimationStart"
+  | "onAnimationEnd"
+  | "onAnimationIteration";
+
+export type CardProps = Omit<
+  HTMLAttributes<HTMLDivElement>,
+  ConflictingHTMLProps
+> &
+  HTMLMotionProps<"div"> & {
   hover?: boolean;
   padding?: "none" | "sm" | "md" | "lg";
   as?: "div" | "article" | "section";
@@ -49,4 +65,3 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
 Card.displayName = "Card";
 
 export { Card };
-export type { CardProps };
