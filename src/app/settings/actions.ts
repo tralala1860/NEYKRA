@@ -41,8 +41,6 @@ export async function updateThemePreference(
     return { error: "Thème invalide" };
   }
 
-  // NOTE: color_mode n'est plus écrit — colonne supprimée par la
-  // migration 003 (requête tolérante : theme_preference uniquement).
   const { error } = await supabase
     .from("profiles")
     .update({ theme_preference: universe })
@@ -73,7 +71,6 @@ export async function getProfilePreferences() {
     return null;
   }
 
-  // NOTE: theme_preference uniquement (color_mode supprimé, migration 003).
   const { data: profile, error } = await supabase
     .from("profiles")
     .select("theme_preference")
