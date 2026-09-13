@@ -7,7 +7,7 @@ import { ThemeProvider } from "@/lib/theme";
 const anton = Anton({
   variable: "--font-anton",
   subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: ["400"],
   display: "swap",
 });
 

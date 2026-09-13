@@ -111,7 +111,7 @@ export function ThemeSelector() {
     <div className="flex flex-col gap-8">
       {/* Sélection du thème */}
       <section>
-        <h2 className="mb-4 text-xl font-display font-bold text-[var(--text-primary)]">
+        <h2 className="mb-4 text-xl font-display text-[var(--text-primary)]">
           Choisir ton thème
         </h2>
         <p className="mb-6 text-[var(--text-secondary)]">
@@ -154,7 +154,7 @@ export function ThemeSelector() {
                     }}
                   >
                     <div
-                      className="flex h-6 items-center justify-center rounded-md font-display font-bold text-xs"
+                      className="flex h-6 items-center justify-center rounded-md font-display text-xs"
                       style={{
                         backgroundColor:
                           t.value === "shonen" && colorMode === "dark"
@@ -212,7 +212,7 @@ export function ThemeSelector() {
 
       {/* Sélection du mode couleur */}
       <section>
-        <h2 className="mb-4 text-xl font-display font-bold text-[var(--text-primary)]">
+        <h2 className="mb-4 text-xl font-display text-[var(--text-primary)]">
           Choisir le mode de couleur
         </h2>
         <p className="mb-6 text-[var(--text-secondary)]">

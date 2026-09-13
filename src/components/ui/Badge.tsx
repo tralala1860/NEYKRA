@@ -31,7 +31,7 @@ const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
     ref
   ) => {
     const baseClasses =
-      "inline-flex items-center font-display font-bold rounded-full transition-all duration-200";
+      "inline-flex items-center font-display rounded-full transition-all duration-200";
 
     const variantClasses: Record<BadgeVariant, string> = {
       default:

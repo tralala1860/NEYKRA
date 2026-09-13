@@ -25,7 +25,7 @@ export default async function FeedPage() {
       <header className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--surface)] px-6 py-4">
         <Link
           href="/"
-          className="text-lg font-display font-bold text-[var(--text-primary)] hover:opacity-80 transition-opacity"
+          className="text-lg font-display text-[var(--text-primary)] hover:opacity-80 transition-opacity"
         >
           NEYKRA
         </Link>
@@ -41,7 +41,7 @@ export default async function FeedPage() {
       </header>
 
       <main className="flex flex-1 flex-col items-center justify-center px-6">
-        <h1 className="text-2xl font-display font-bold text-[var(--text-primary)]">
+        <h1 className="text-2xl font-display text-[var(--text-primary)]">
           Fil d&apos;actualité à venir
         </h1>
         <p className="mt-2 text-sm text-[var(--text-secondary)]">

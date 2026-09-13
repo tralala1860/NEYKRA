@@ -24,7 +24,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-display font-bold text-[var(--text-primary)]">
+        <h1 className="text-2xl font-display text-[var(--text-primary)]">
           Connexion
         </h1>
         <p className="mt-1 text-sm text-[var(--text-secondary)]">
