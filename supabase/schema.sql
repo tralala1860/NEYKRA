@@ -7,11 +7,11 @@
 -- ---------------------------------------------------------------------
 -- Sommaire :
 --  1. Extensions
---  2. Tables (14) : profiles, posts, likes, comments, friendships,
+--  2. Tables (15) : profiles, posts, likes, comments, friendships,
 --     conversations, conversation_participants, messages, notifications,
---     blocks, quotes, otaku_status, quiz_questions, quiz_attempts
+--     blocks, quotes, otaku_status, quiz_questions, quiz_answers, quiz_attempts
 --  3. Index
---  4. Fonctions utilitaires (is_accepted_friend, is_blocked)
+--  4. Fonctions utilitaires (is_accepted_friend, is_blocked, check_quiz_answer, compute_is_minor)
 --  5. Trigger : création auto du profil à l'inscription auth
 --  6. Row Level Security : activation + politiques de base
 -- =====================================================================
@@ -28,7 +28,7 @@ create table public.profiles (
   display_name      text,
   avatar_url        text,
   bio               text,
-  birthdate         date not null,
+  birthdate         date,
   is_minor          boolean not null default false,
   theme_preference  text not null default 'shonen'
                     check (theme_preference in ('shonen', 'seinen', 'kawaii')),
@@ -140,8 +140,15 @@ create table public.quiz_questions (
   id            uuid primary key default gen_random_uuid(),
   question      text not null,
   choix         jsonb not null,
-  bonne_reponse text not null,
   difficulte    text not null default 'moyen'
+);
+
+-- quiz_answers : bonne réponse d'une question — JAMAIS exposée au client
+-- (RLS activée, aucune policy SELECT => accès refusé à tous les rôles client ;
+-- seuls le propriétaire de la table et les fonctions security definer la lisent)
+create table public.quiz_answers (
+  question_id   uuid primary key references public.quiz_questions (id) on delete cascade,
+  bonne_reponse text not null
 );
 
 -- quiz_attempts : tentatives de quiz (anti-triche : 1 essai / jour / user)
@@ -201,19 +208,85 @@ as $$
   );
 $$;
 
+-- L'utilisateur soumet une réponse ; la fonction compare côté serveur et ne
+-- renvoie que vrai/faux (jamais la bonne réponse, invisible du client).
+-- security definer pour lire quiz_answers en ignorant la RLS du client.
+create or replace function public.check_quiz_answer(
+  p_question_id          uuid,
+  p_reponse_utilisateur  text
+)
+returns boolean
+language sql
+stable
+security definer set search_path = ''
+as $$
+  select coalesce(
+    (
+      select (qa.bonne_reponse = p_reponse_utilisateur)
+      from public.quiz_answers qa
+      where qa.question_id = p_question_id
+    ),
+    false
+  );
+$$;
+
+revoke all on function public.check_quiz_answer(uuid, text) from public;
+grant execute on function public.check_quiz_answer(uuid, text) to authenticated;
+
+-- Mineur = moins de 18 ans à la date du jour (majorité au 18e anniversaire
+-- inclus). Né.e un 29/02 → majorité le 28/02 (comportement PostgreSQL de
+-- `date + interval '18 years'`, aligné côté app dans src/lib/auth/age.ts).
+-- Calcul serveur : is_minor n'est JAMAIS pris depuis les données client.
+create or replace function public.compute_is_minor(p_birthdate date)
+returns boolean
+language sql
+stable
+set search_path = ''
+as $$
+  select p_birthdate is not null
+    and current_date < (p_birthdate + interval '18 years');
+$$;
+
 -- 5. TRIGGER : profil auto-créé à l'inscription --------------------------
+-- La ligne profiles est remplie à partir des métadonnées envoyées par l'app
+-- lors du signUp (options.data : username, birthdate). is_minor et is_private
+-- sont recalculés côté serveur via compute_is_minor (jamais de confiance au
+-- client). trigger = security definer → contourne la RLS pour créer le profil.
 create or replace function public.handle_new_user_auth()
 returns trigger
 language plpgsql
 security definer set search_path = ''
 as $$
+declare
+  v_username  text;
+  v_birthdate date;
 begin
-  insert into public.profiles (id, username)
+  v_username := nullif(btrim(new.raw_user_meta_data ->> 'username'), '');
+  if v_username is null then
+    v_username := 'user_' || replace(new.id::text, '-', '');
+  end if;
+
+  begin
+    v_birthdate := nullif(new.raw_user_meta_data ->> 'birthdate', '')::date;
+  exception when others then
+    -- Métadonnée de naissance invalide → birthdate NULL (pas de blocage,
+    -- la contrainte d'âge est appliquée au niveau applicatif, Phase 1).
+    v_birthdate := null;
+  end;
+
+  insert into public.profiles (id, username, birthdate, is_minor, is_private)
   values (
     new.id,
-    'user_' || replace(new.id::text, '-', '')
+    v_username,
+    v_birthdate,
+    public.compute_is_minor(v_birthdate),
+    public.compute_is_minor(v_birthdate)
   )
-  on conflict (id) do nothing;
+  on conflict (id) do update
+  set username   = excluded.username,
+      birthdate  = excluded.birthdate,
+      is_minor   = excluded.is_minor,
+      is_private = excluded.is_private;
   return new;
 end;
 $$;
@@ -339,7 +412,7 @@ create policy "messages_select" on public.messages
   for select using (
     exists (
       select 1 from public.conversation_participants cp
-      where cp.conversation_id = conversation_id and cp.user_id = auth.uid()
+      where cp.conversation_id = messages.conversation_id and cp.user_id = auth.uid()
     )
   );
 create policy "messages_insert_participant" on public.messages
@@ -347,14 +420,14 @@ create policy "messages_insert_participant" on public.messages
     sender_id = auth.uid()
     and exists (
       select 1 from public.conversation_participants cp
-      where cp.conversation_id = conversation_id and cp.user_id = auth.uid()
+      where cp.conversation_id = messages.conversation_id and cp.user_id = auth.uid()
     )
   );
 create policy "messages_update_read" on public.messages
   for update using (
     exists (
       select 1 from public.conversation_participants cp
-      where cp.conversation_id = conversation_id and cp.user_id = auth.uid()
+      where cp.conversation_id = messages.conversation_id and cp.user_id = auth.uid()
     )
   );
 
@@ -384,8 +457,8 @@ create policy "otaku_status_select" on public.otaku_status
 create policy "otaku_status_update_own" on public.otaku_status
   for update using (user_id = auth.uid()) with check (user_id = auth.uid());
 
--- 6.12 quiz_questions (lecture ouverte aux connectés pour la V1 ;
---      l'anti-triche est géré côté logique métier en Phase 6)
+-- 6.12 quiz_questions (lecture ouverte aux connectés ; la bonne réponse N'EST
+--      PAS dans cette table — elle vit dans quiz_answers, verrouillée)
 alter table public.quiz_questions enable row level security;
 create policy "quiz_questions_select" on public.quiz_questions
   for select using (true);
@@ -398,3 +471,10 @@ create policy "quiz_attempts_insert_own" on public.quiz_attempts
   for insert with check (user_id = auth.uid());
 create policy "quiz_attempts_update_own" on public.quiz_attempts
   for update using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- 6.14 quiz_answers (table verrouillée : AUCUNE policy définie)
+--      RLS activée + absence totale de policy SELECT/INSERT/UPDATE/DELETE sur
+--      cette table = accès refusé aux rôles client (anon, authenticated).
+--      Seul le propriétaire (postgres) et les fonctions security definer
+--      (ex. check_quiz_answer) peuvent y toucher.
+alter table public.quiz_answers enable row level security;

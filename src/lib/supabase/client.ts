@@ -1,11 +1,13 @@
-// NEYKRA — client Supabase côté navigateur.
-// Utilisé par les composants client (App Router).
+// NEYKRA — client Supabase côté navigateur (App Router).
+// Session stockée dans les cookies (via @supabase/ssr) pour être lisible
+// par le serveur (voir src/lib/supabase/server.ts et src/proxy.ts).
 //
-// Phase 0 : simple mise en place du client.
-// Les variables sont issues de .env.local (NEXT_PUBLIC_*).
-// RLS côté Supabase protège toutes les tables (voir supabase/schema.sql).
+// Phase 1 : authentification. Les formulaires passent par des Server Actions
+// (src/lib/auth/actions.ts) ; ce client est utilisé par les composants qui
+// ont besoin de l'état d'authentification côté navigateur.
+"use client";
 
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -17,4 +19,4 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);

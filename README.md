@@ -33,3 +33,4 @@ Grand public francophone (V1), mineurs compris → exigences de sécurité renfo
 ## État d'avancement
 
 - **Phase 0 — Fondations** ✅ → voir `CHANGELOG.md`
+- **Phase 1 — Authentification** ✅ → inscription, connexion, déconnexion, compte mineur détecté automatiquement, protection de route `/feed`
