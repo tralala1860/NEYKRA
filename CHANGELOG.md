@@ -3,6 +3,33 @@
 > À mettre à jour à la fin de chaque session de développement (Claude Code, Cline ou autre).
 > Format : date, ce qui a été fait, ce qui reste à faire / bugs connus.
 
+## [13/09/2026] — Session 3 — Phase 1bis : Fondation du système de design
+
+- **Fonts** : remplacement de Geist par Anton (display, headers) + Inter (body) via `next/font/google` dans `src/app/layout.tsx`.
+- **Attributs data-theme/data-mode** : ajout sur la balise `<html>` (valeurs par défaut : `data-theme="shonen"`, `data-mode="dark"`).
+- **Variables CSS complètes** : système de 6 combinaisons (Shonen/Seinen/Kawaii × Dark/Light) défini dans `src/app/globals.css` avec couleurs, fonts, spacings, radii, shadows, focus styles, scrollbar, text selection.
+- **Mapping Tailwind @theme** : correspondance des variables CSS vers les noms Tailwind (`bg-accent`, `text-background`, `border-border`, etc.) pour utilisation dans les classes `bg-*`, `text-*`, `border-*`, `ring-*`.
+- **Framer Motion** : intégré (déjà installé en Phase 0), animations activées dans les composants UI (Button, Card, Badge) via `whileHover`, `whileTap`, `AnimatePresence`.
+- **ThemeProvider** (`src/lib/theme/ThemeProvider.tsx`) : contexte React client qui lit/écrit les préférences dans `profiles.theme_preference` et `profiles.color_mode`, applique les attributs `data-theme`/`data-mode` sur `<html>`, gère l'état de chargement.
+- **Types** (`src/lib/theme/types.ts`) : export de `Theme` (`shonen | seinen | kawaii`), `ColorMode` (`dark | light`), tableaux `THEMES` et `COLOR_MODES` pour l'affichage.
+- **Composants UI** (`src/components/ui/`) :
+  - `Button` : variant `primary | secondary | ghost | danger`, sizes `sm | md | lg`, état `loading` avec spinner, animations Framer Motion.
+  - `Card` : padding `none | sm | md | lg`, option `hover` avec lift/shadow, component polymorphique (`div | article | section`).
+  - `Badge` : variant `default | success | warning | error | info | accent | outline`, sizes `sm | md`, option `pulse` (animation SVG).
+- **Page `/settings`** (`src/app/settings/page.tsx`) : sélecteur de thème (3 cartes avec aperçu visuel) + bascule sombre/clair (2 boutons), lecture des préférences depuis Supabase, sauvegarde via Server Action `updateThemePreference`, messages de confirmation.
+- **Server Actions** (`src/app/settings/actions.ts`) : `updateThemePreference(theme, colorMode)` pour écrire dans `profiles`, `getProfilePreferences()` pour lire les préférences actuelles.
+- **SupabaseProvider** (`src/lib/supabase/provider.tsx`) : contexte React client pour fournir l'instance Supabase browser au lieu de recréer le client à chaque composant.
+- **Mise à jour des pages existantes** :
+  - `/feed/page.tsx` : header avec lien vers `/settings`, styles CSS variables au lieu des classes zinc.
+  - `/login/page.tsx` : styles CSS variables, message de confirmation avec couleurs succès.
+  - `/signup/page.tsx` : styles CSS variables.
+  - `/login/login-form.tsx` : inputs avec variables CSS, bouton via composant `Button`, messages d'erreur avec couleurs error.
+  - `/signup/signup-form.tsx` : idem, bouton via `Button`.
+  - `/feed/logout-button.tsx` : bouton avec variables CSS.
+- **SCHEMA + MIGRATION** : colonne `color_mode` ('dark'/'light', default 'dark') ajoutée à `profiles` dans `supabase/schema.sql` + migration `supabase/migrations/002_add_color_mode.sql`.
+- **SPEC** : NEYKRA_SPEC.md mis à jour — section 4 (schéma profiles) avec `color_mode`, section 6 complétée avec tableaux des palettes (Shonen/Seinen/Kawaii × Dark/Light), mode sombre/clair, et détails d'implémentation technique.
+- **CHANGELOG** : cette entrée.
+
 ## [13/09/2026] — Session 2 — Phase 1 : Authentification
 - **Dépendance** : `@supabase/ssr@0.12.7` ajouté (session cookies compatible SSR).
 - **Clients Supabase** : `src/lib/supabase/client.ts` basculé sur `createBrowserClient` (SSR) + nouveau `src/lib/supabase/server.ts` (`createServerClient`, un par requête).

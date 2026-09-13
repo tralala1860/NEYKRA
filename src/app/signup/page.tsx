@@ -18,10 +18,10 @@ export default async function SignupPage() {
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
+        <h1 className="text-2xl font-display font-bold text-[var(--text-primary)]">
           Créer un compte
         </h1>
-        <p className="mt-1 text-sm text-zinc-600">
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">
           Rejoins la communauté NEYKRA en quelques secondes.
         </p>
 

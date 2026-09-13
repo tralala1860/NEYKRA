@@ -4,11 +4,12 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { signIn } from "@/lib/auth/actions";
 import type { AuthFormState } from "@/lib/auth/actions";
+import { Button } from "@/components/ui/Button";
 
 const initialState: AuthFormState = {};
 
 const inputClass =
-  "rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-zinc-500";
+  "rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-tertiary)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]";
 
 export function LoginForm() {
   const [state, formAction, isPending] = useActionState(signIn, initialState);
@@ -16,16 +17,19 @@ export function LoginForm() {
   return (
     <form action={formAction} className="flex flex-col gap-4">
       {state.error ? (
-        <p
+        <div
           role="alert"
-          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+          className="rounded-lg border border-[var(--color-error)]/30 bg-[var(--color-error)]/10 px-4 py-3 text-sm text-[var(--color-error)]"
         >
           {state.error}
-        </p>
+        </div>
       ) : null}
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="login-email" className="text-sm font-medium text-zinc-700">
+        <label
+          htmlFor="login-email"
+          className="text-sm font-medium text-[var(--text-secondary)]"
+        >
           Adresse email
         </label>
         <input
@@ -40,7 +44,10 @@ export function LoginForm() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="login-password" className="text-sm font-medium text-zinc-700">
+        <label
+          htmlFor="login-password"
+          className="text-sm font-medium text-[var(--text-secondary)]"
+        >
           Mot de passe
         </label>
         <input
@@ -54,19 +61,15 @@ export function LoginForm() {
         />
       </div>
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-60"
-      >
+      <Button type="submit" disabled={isPending} loading={isPending}>
         {isPending ? "Connexion…" : "Se connecter"}
-      </button>
+      </Button>
 
-      <p className="text-center text-sm text-zinc-600">
+      <p className="text-center text-sm text-[var(--text-secondary)]">
         Pas encore de compte ?{" "}
         <Link
           href="/signup"
-          className="font-medium text-zinc-900 underline underline-offset-2"
+          className="font-medium text-[var(--accent)] underline underline-offset-2 hover:underline-offset-4"
         >
           Inscris-toi
         </Link>

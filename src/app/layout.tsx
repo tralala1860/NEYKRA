@@ -1,15 +1,20 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Anton, Inter } from "next/font/google";
 import "./globals.css";
+import { SupabaseProvider } from "@/lib/supabase/provider";
+import { ThemeProvider } from "@/lib/theme";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const anton = Anton({
+  variable: "--font-anton",
   subsets: ["latin"],
+  weight: ["400", "700"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -21,9 +26,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="fr"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${anton.variable} ${inter.variable} h-full antialiased`}
+      data-theme="shonen"
+      data-mode="dark"
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <SupabaseProvider>
+          <ThemeProvider>{children}</ThemeProvider>
+        </SupabaseProvider>
+      </body>
     </html>
   );
 }

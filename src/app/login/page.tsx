@@ -22,19 +22,22 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const { confirmed } = await searchParams;
 
   return (
-    <main className="flex flex-1 items-center justify-center px-4">
+    <main className="flex flex-1 items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
+        <h1 className="text-2xl font-display font-bold text-[var(--text-primary)]">
           Connexion
         </h1>
-        <p className="mt-1 text-sm text-zinc-600">
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">
           Heureux de te revoir sur NEYKRA.
         </p>
 
         {confirmed ? (
-          <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <div
+            className="mt-4 rounded-lg border border-[var(--color-success)]/30 bg-[var(--color-success)]/10 px-4 py-3 text-sm text-[var(--color-success)]"
+            role="status"
+          >
             Adresse email confirmée ! Tu peux maintenant te connecter.
-          </p>
+          </div>
         ) : null}
 
         <div className="mt-6">

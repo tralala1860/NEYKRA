@@ -57,6 +57,7 @@ Binate travaille **seul**, avec un **agent IA en sessions successives** (Claude 
 | birthdate | date | Nullable en base — la valeur est exigée au formulaire d'inscription (Phase 1) ; le trigger de création de profil la prend depuis `auth.users.raw_user_meta_data` si fournie, sinon NULL. `is_minor` est recalculé au niveau serveur (SQL + TS). |
 | is_minor | boolean | Calculé automatiquement depuis `birthdate` |
 | theme_preference | text | 'shonen' / 'seinen' / 'kawaii' |
+| color_mode | text | 'dark' / 'light' (par défaut 'dark') |
 | is_private | boolean | Vrai par défaut si mineur |
 | created_at | timestamp | |
 
@@ -115,7 +116,52 @@ Règles RLS minimales à mettre en place dès la V1 :
 
 Chaque thème = variables CSS (couleurs, police d'accent, style des bordures). Transition animée entre thèmes via Framer Motion.
 
----
+### 6.1 Palettes de couleurs
+
+#### Shonen
+| Rôle | Couleur (Dark) | Couleur (Light) |
+|---|---|---|
+| Accent principal | `#ff6b35` (orange vif) | `#e85d26` (orange vif) |
+| Fond | `#1a1a2e` (bleu nuit) | `#fff8f0` (crème) |
+| Surface | `#252542` | `#fff` |
+| Texte principal | `#ffffff` | `#1a1a2e` |
+| Texte secondaire | `#a0a0b0` | `#606070` |
+| Bordure | `rgba(255,107,53,0.2)` | `rgba(232,93,38,0.2)` |
+
+#### Seinen
+| Rôle | Couleur (Dark) | Couleur (Light) |
+|---|---|---|
+| Accent principal | `#4a90d9` (bleu acier) | `#2c6aaa` (bleu profond) |
+| Fond | `#0d0d12` (noir charbon) | `#f0f0f2` (gris clair) |
+| Surface | `#181820` | `#ffffff` |
+| Texte principal | `#e0e0e8` | `#1a1a2e` |
+| Texte secondaire | `#707080` | `#707080` |
+| Bordure | `rgba(74,144,217,0.2)` | `rgba(44,106,170,0.2)` |
+
+#### Kawaii
+| Rôle | Couleur (Dark) | Couleur (Light) |
+|---|---|---|
+| Accent principal | `#ff8fab` (rose pastel) | `#ff6b8a` (rose vif) |
+| Fond | `#1a1525` (violet profond) | `#faf5ff` (lavande) |
+| Surface | `#251d35` | `#ffffff` |
+| Texte principal | `#f0e6ff` | `#1a1525` |
+| Texte secondaire | `#a090b0` | `#807090` |
+| Bordure | `rgba(255,143,171,0.2)` | `rgba(255,107,138,0.2)` |
+
+### 6.2 Mode sombre / clair
+
+En plus du thème, chaque utilisateur peut choisir entre le mode sombre (`dark`) et le mode clair (`light`), sauvegardé dans `profiles.color_mode` (par défaut : `dark`).
+
+Le mode agit comme un override : il change uniquement les valeurs de fond, surface, texte et bordure tout en conservant l'accent du thème choisi.
+
+### 6.3 Implémentation technique
+
+- Variables CSS définies dans `src/app/globals.css` sous forme de blocs `[data-theme="shonen"][data-mode="dark"]`, `[data-theme="shonen"][data-mode="light"]`, etc.
+- Mapping Tailwind `@theme` pour utiliser les variables CSS via les noms `bg-accent`, `text-background`, `border-border`, etc.
+- Attributs `data-theme` et `data-mode` sur la balise `<html>` (lancé depuis `src/app/layout.tsx` avec les valeurs par défaut Shonen+Dark).
+- Contexte React `ThemeProvider` (`src/lib/theme/ThemeProvider.tsx`) pour la gestion côté client : lecture des préférences depuis `profiles`, mise à jour des attributs `data-theme`/`data-mode`, animation de transition via `framer-motion`.
+- Page `/settings` (`src/app/settings/page.tsx`) avec sélecteur de thème (3 boutons) et bascule sombre/clair (2 boutons), sauvegarde via Server Action `updateThemePreference`.
+- Composants UI réutilisables (`src/components/ui/`) : `Button`, `Card`, `Badge` — tous utilisant les variables CSS et les fonts Anton (display) / Inter (corps).
 
 ## 7. Système de citations manga
 

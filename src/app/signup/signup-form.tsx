@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { signUp } from "@/lib/auth/actions";
 import type { AuthFormState } from "@/lib/auth/actions";
+import { Button } from "@/components/ui/Button";
 
 const initialState: AuthFormState = {};
 
@@ -11,7 +12,7 @@ const initialState: AuthFormState = {};
 const todayMax = new Date().toISOString().split("T")[0];
 
 const inputClass =
-  "rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-zinc-500";
+  "rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-tertiary)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]";
 
 export function SignupForm() {
   const [state, formAction, isPending] = useActionState(signUp, initialState);
@@ -20,21 +21,27 @@ export function SignupForm() {
   return (
     <form action={formAction} className="flex flex-col gap-4">
       {state.success ? (
-        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+        <div
+          className="rounded-lg border border-[var(--color-success)]/30 bg-[var(--color-success)]/10 px-4 py-3 text-sm text-[var(--color-success)]"
+          role="status"
+        >
           {state.success}
-        </p>
+        </div>
       ) : null}
       {state.error ? (
-        <p
+        <div
           role="alert"
-          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+          className="rounded-lg border border-[var(--color-error)]/30 bg-[var(--color-error)]/10 px-4 py-3 text-sm text-[var(--color-error)]"
         >
           {state.error}
-        </p>
+        </div>
       ) : null}
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="signup-email" className="text-sm font-medium text-zinc-700">
+        <label
+          htmlFor="signup-email"
+          className="text-sm font-medium text-[var(--text-secondary)]"
+        >
           Adresse email
         </label>
         <input
@@ -50,8 +57,11 @@ export function SignupForm() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="signup-username" className="text-sm font-medium text-zinc-700">
-          Nom d'utilisateur
+        <label
+          htmlFor="signup-username"
+          className="text-sm font-medium text-[var(--text-secondary)]"
+        >
+          Nom d&apos;utilisateur
         </label>
         <input
           id="signup-username"
@@ -69,7 +79,10 @@ export function SignupForm() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="signup-password" className="text-sm font-medium text-zinc-700">
+        <label
+          htmlFor="signup-password"
+          className="text-sm font-medium text-[var(--text-secondary)]"
+        >
           Mot de passe
         </label>
         <input
@@ -81,13 +94,18 @@ export function SignupForm() {
           minLength={6}
           className={inputClass}
         />
-        <p className="text-xs text-zinc-500">6 caractères minimum.</p>
+        <p className="text-xs text-[var(--text-tertiary)]">6 caractères minimum.</p>
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="signup-birthdate" className="text-sm font-medium text-zinc-700">
+        <label
+          htmlFor="signup-birthdate"
+          className="text-sm font-medium text-[var(--text-secondary)]"
+        >
           Date de naissance{" "}
-          <span className="font-normal text-zinc-500">(obligatoire)</span>
+          <span className="font-normal text-[var(--text-tertiary)]">
+            (obligatoire)
+          </span>
         </label>
         <input
           id="signup-birthdate"
@@ -98,25 +116,21 @@ export function SignupForm() {
           max={todayMax}
           className={inputClass}
         />
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-[var(--text-tertiary)]">
           Elle nous permet de détecter les comptes mineurs : les comptes de
           moins de 18 ans sont automatiquement mis en privé.
         </p>
       </div>
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-60"
-      >
+      <Button type="submit" disabled={isPending} loading={isPending}>
         {isPending ? "Création du compte…" : "Créer mon compte"}
-      </button>
+      </Button>
 
-      <p className="text-center text-sm text-zinc-600">
+      <p className="text-center text-sm text-[var(--text-secondary)]">
         Déjà membre ?{" "}
         <Link
           href="/login"
-          className="font-medium text-zinc-900 underline underline-offset-2"
+          className="font-medium text-[var(--accent)] underline underline-offset-2 hover:underline-offset-4"
         >
           Connecte-toi
         </Link>

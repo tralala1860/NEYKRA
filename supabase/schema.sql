@@ -32,6 +32,8 @@ create table public.profiles (
   is_minor          boolean not null default false,
   theme_preference  text not null default 'shonen'
                     check (theme_preference in ('shonen', 'seinen', 'kawaii')),
+   color_mode        text not null default 'dark'
+                     check (color_mode in ('dark', 'light')),
   is_private        boolean not null default false,
   created_at        timestamptz not null default now()
 );
