@@ -54,7 +54,7 @@ Binate travaille **seul**, avec un **agent IA en sessions successives** (Claude 
 | display_name | text | |
 | avatar_url | text | |
 | bio | text | |
-| birthdate | date | Obligatoire — sert à détecter les comptes mineurs |
+| birthdate | date | Nullable en base — la valeur est exigée au formulaire d'inscription (Phase 1) ; le trigger de création de profil la prend depuis `auth.users.raw_user_meta_data` si fournie, sinon NULL. `is_minor` est recalculé au niveau serveur (SQL + TS). |
 | is_minor | boolean | Calculé automatiquement depuis `birthdate` |
 | theme_preference | text | 'shonen' / 'seinen' / 'kawaii' |
 | is_private | boolean | Vrai par défaut si mineur |
@@ -181,8 +181,15 @@ Chaque thème = variables CSS (couleurs, police d'accent, style des bordures). T
 | id | uuid |
 | question | text |
 | choix | jsonb |
-| bonne_reponse | text |
 | difficulte | text |
+
+`quiz_answers`
+| Colonne | Type | Notes |
+|---|---|---|
+| question_id | uuid | PK, FK → `quiz_questions.id` (ON DELETE CASCADE) |
+| bonne_reponse | text | **Jamais exposée au client** |
+
+> **RLS sur `quiz_answers`** : table verrouillée — RLS activée, aucune policy SELECT/INSERT/UPDATE/DELETE définie → accès refusé aux rôles client (`anon`, `authenticated`). Seul le propriétaire (postgres) et les fonctions `security definer` (ex. `check_quiz_answer`) peuvent lire/écrire cette table. La bonne réponse ne transite donc jamais sur le réseau client ; la validation se fait exclusivement côté serveur via `check_quiz_answer(question_id, reponse_utilisateur) → boolean`.
 
 `quiz_attempts`
 | Colonne | Type |
