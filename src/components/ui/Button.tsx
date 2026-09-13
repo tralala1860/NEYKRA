@@ -1,15 +1,31 @@
 "use client";
 
 import { forwardRef, type ButtonHTMLAttributes } from "react";
-import { motion } from "framer-motion";
+import { motion, type HTMLMotionProps } from "framer-motion";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: ButtonVariant;
-  size?: "sm" | "md" | "lg";
-  loading?: boolean;
-};
+type ConflictingHTMLProps =
+  | "onDrag"
+  | "onDragStart"
+  | "onDragEnd"
+  | "onDragEnter"
+  | "onDragLeave"
+  | "onDragOver"
+  | "onDrop"
+  | "onAnimationStart"
+  | "onAnimationEnd"
+  | "onAnimationIteration";
+
+export type ButtonProps = Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  ConflictingHTMLProps
+> &
+  HTMLMotionProps<"button"> & {
+    variant?: ButtonVariant;
+    size?: "sm" | "md" | "lg";
+    loading?: boolean;
+  };
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
@@ -88,4 +104,4 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = "Button";
 
 export { Button };
-export type { ButtonProps, ButtonVariant };
+export type { ButtonVariant };

@@ -209,6 +209,7 @@ export function ThemeSelector() {
             );
           })}
         </div>
+      </section>
 
       {/* Sélection du mode couleur */}
       <section>
@@ -267,4 +268,3 @@ export function ThemeSelector() {
     </div>
   );
 }
-      </section>

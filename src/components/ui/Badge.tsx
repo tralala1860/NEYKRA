@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef, type HTMLAttributes } from "react";
-import { motion } from "framer-motion";
+import { motion, type HTMLMotionProps } from "framer-motion";
 
 type BadgeVariant =
   | "default"
@@ -12,11 +12,27 @@ type BadgeVariant =
   | "accent"
   | "outline";
 
-type BadgeProps = HTMLAttributes<HTMLSpanElement> & {
-  variant?: BadgeVariant;
-  size?: "sm" | "md";
-  pulse?: boolean;
-};
+type ConflictingHTMLProps =
+  | "onDrag"
+  | "onDragStart"
+  | "onDragEnd"
+  | "onDragEnter"
+  | "onDragLeave"
+  | "onDragOver"
+  | "onDrop"
+  | "onAnimationStart"
+  | "onAnimationEnd"
+  | "onAnimationIteration";
+
+export type BadgeProps = Omit<
+  HTMLAttributes<HTMLSpanElement>,
+  ConflictingHTMLProps
+> &
+  HTMLMotionProps<"span"> & {
+    variant?: BadgeVariant;
+    size?: "sm" | "md";
+    pulse?: boolean;
+  };
 
 const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
   (
@@ -81,4 +97,4 @@ const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
 Badge.displayName = "Badge";
 
 export { Badge };
-export type { BadgeProps, BadgeVariant };
+export type { BadgeVariant };
