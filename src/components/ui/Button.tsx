@@ -45,7 +45,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variantClasses: Record<ButtonVariant, string> = {
       primary:
-        "bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] active:scale-[0.98] shadow-md hover:shadow-lg hover:shadow-[var(--accent-glow)]/20",
+        "neykra-btn-glow bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] active:scale-[0.98] shadow-md hover:shadow-lg hover:shadow-[var(--accent-glow)]/20",
       secondary:
         "bg-[var(--surface)] text-[var(--text-primary)] border border-[var(--border)] hover:border-[var(--border-hover)] hover:bg-[var(--surface-hover)] active:scale-[0.98]",
       ghost:

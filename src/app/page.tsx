@@ -21,7 +21,7 @@ export default async function Home() {
 
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-      <h1 className="text-4xl font-bold tracking-tight text-zinc-900">
+      <h1 className="neykra-speedlines text-4xl font-bold tracking-tight text-zinc-900">
         NEYKRA
       </h1>
       <p className="mt-3 max-w-md text-zinc-600">

@@ -346,6 +346,116 @@ body {
 
 
 /* =====================================================================
+ * NEYKRA — Identité visuelle manga (NEYKRA_SPEC.md section 6.3)
+ * Règle 70/20/10 : classes utilitaires DISCRÈTES, jamais globales.
+ * Toutes les couleurs passent par var(--accent) / var(--text-primary),
+ * donc elles suivent automatiquement l'univers actif (5 univers).
+ * Interdits respectés : pas de personnages, pas de kanji décoratifs,
+ * pas d'animation permanente, pas de néon généralisé.
+ * ===================================================================== */
+
+/* --- 1. Trame de points halftone (Card uniquement) ---
+ * Motif radial répété, couleur = accent-1 de l'univers actif,
+ * opacité effective ~0.07 via color-mix (spec : 0.06–0.08). */
+.neykra-halftone {
+  background-image: radial-gradient(
+    var(--accent-subtle) 1px,
+    transparent 1.3px
+  );
+  background-size: 10px 10px;
+}
+
+@supports (background: color-mix(in srgb, red 50%, blue)) {
+  .neykra-halftone {
+    background-image: radial-gradient(
+      color-mix(in srgb, var(--accent) 7%, transparent) 1.1px,
+      transparent 1.3px
+    );
+    background-size: 10px 10px;
+  }
+}
+
+/* --- 2. Bordures "case de BD" (Card) ---
+ * Bordure franche 2px couleur texte + ombre décalée SANS flou
+ * (3px 3px 0 accent-1). Coins asymétriques UNIQUEMENT en featured. */
+.neykra-panel {
+  border: 2px solid var(--text-primary);
+  box-shadow: 3px 3px 0 var(--accent);
+}
+
+.neykra-panel--featured {
+  border-width: 3px;
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 0.3rem;
+  border-bottom-right-radius: 1rem;
+  border-bottom-left-radius: 0.3rem;
+}
+
+/* --- 3. Glow contrôlé (Button primary, hover/focus uniquement) ---
+ * Intensité modérée, couleur accent-1 de l'univers actif. */
+.neykra-btn-glow:hover,
+.neykra-btn-glow:focus-visible {
+  filter: drop-shadow(0 0 6px var(--accent-glow))
+    drop-shadow(0 2px 10px var(--accent-subtle));
+}
+
+/* --- 4. Lignes de vitesse discrètes (titres h1/h2 principaux) ---
+ * Pseudo-élément statique (AUCUNE animation), opacité faible,
+ * bords fondus via mask. À appliquer via class="neykra-speedlines",
+ * jamais globalement sur tous les titres. */
+.neykra-speedlines {
+  position: relative;
+  isolation: isolate;
+}
+
+.neykra-speedlines::before {
+  content: "";
+  position: absolute;
+  inset: -0.35em -0.75em;
+  z-index: -1;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    105deg,
+    var(--accent-subtle) 0 2px,
+    transparent 2px 10px
+  );
+  opacity: 0.35;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 20%,
+    black 80%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 20%,
+    black 80%,
+    transparent
+  );
+}
+
+@supports (background: color-mix(in srgb, red 50%, blue)) {
+  .neykra-speedlines::before {
+    background: repeating-linear-gradient(
+      105deg,
+      color-mix(in srgb, var(--accent) 12%, transparent) 0 2px,
+      transparent 2px 10px
+    );
+  }
+}
+
+/* Accessibilité : aucun effet permanent de toute façon, mais on
+ * neutralise le glow pour les utilisateurs qui réduisent les effets. */
+@media (prefers-reduced-motion: reduce) {
+  .neykra-btn-glow:hover,
+  .neykra-btn-glow:focus-visible {
+    filter: none;
+  }
+}
+
+/* =====================================================================
  * Tailwind CSS — Mapping des variables custom
  * ===================================================================== */
 
