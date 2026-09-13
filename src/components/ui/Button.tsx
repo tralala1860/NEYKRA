@@ -89,4 +89,3 @@ Button.displayName = "Button";
 
 export { Button };
 export type { ButtonProps, ButtonVariant };
-export type { ButtonProps, ButtonVariant };
