@@ -30,6 +30,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# NEYKRA — logs de dev/build locaux (build.cmd/dev.cmd en génèrent à chaque session)
+dev.log
+build.log
+
 # env files (can opt-in for committing if needed)
 .env*
 !.env.example
