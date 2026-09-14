@@ -2,7 +2,14 @@
 
 > À mettre à jour à la fin de chaque session de développement (Claude Code, Cline ou autre).
 > Format : date, ce qui a été fait, ce qui reste à faire / bugs connus.
-## [14/09/2026] — Session 5 — Phase 2, étape 2 : posts, fil d'actualité, likes, commentaires
+
+## [14/09/2026] — Session 6 — Refonte hero accueil (encre manga percutante)
+
+- **Page d'accueil publique `src/app/page.tsx`** : refonte complète direction « encre manga » (noir/blanc/accent) — numérotation « Chapitre 01 » (tracking large, discret), titre NEYKRA en Anton très grand format avec éclaboussure d'encre SVG organique derrière (tache principale accent-1 opacité 0.85 + contre-tache accent-2 + projections), sous-titre sur bandeau surlignage irrégulier (clip-path polygonal façon marqueur, pas de bulle arrondie), texte explicatif sobre (var(--text-secondary)).
+- **CSS `src/app/globals.css`** (bloc « HERO ACCUEIL ») : `.neykra-hero` (trame de points halftone renforcée, opacity 0.12), `.neykra-hero-lines--tl/tr/bl/br` (lignes de vitesse statiques des 4 coins vers le centre, mask dégradé, accent-1), `.neykra-hero-title` (halo -webkit-text-stroke couleur bg pour lisibilité du titre sur la tache d'encre, y compris univers clairs), `.neykra-highlight` (surlignage polygonal irrégulier accent-1), `.neykra-btn-hero` (coins coupés + micro-jitter via clip-path 16 points, ombre décalée dure accent, sans radius). Tout est piloté par les tokens `--neykra-*` de l'univers actif (aucune couleur en dur) → s'adapte automatiquement aux 5 univers.
+- **Token `--neykra-on-accent`** ajouté aux 6 blocs (`:root` + 5 univers) : couleur de texte lisible sur fond accent-1 selon chaque univers (blanc sur VOID/ZEN, sombre sur NEON TOKYO/SAKURA/INFERNO).
+- **Button `src/components/ui/Button.tsx`** : variante primary passe de `text-white` en dur à `text-[var(--neykra-on-accent)]` (contraste automatique par univers, ex. NEON TOKYO cyan → texte sombre).
+- Build vérifié : ✓ compilé, TypeScript OK, 9/9 pages.
 
 - **Server Actions `src/lib/posts/actions.ts`** : `createPost` (texte et/ou média uploadé vers le bucket Storage `posts`, détection MIME, max 5 Mo), `getFeedPosts` (50 posts les plus récents, join `profiles` + `otaku_status`, compteurs likes/commentaires, `has_liked`, **commentaires chargés en une requête avec join profiles et groupés par post**), `toggleLike`, `addComment`, `deletePost`, `deleteComment`. S'appuie sur la RLS existante (`post_visible_to_reader`, `*_delete_own`) pour la visibilité et les permissions.
 - **Types `src/lib/posts/types.ts`** : `PostWithAuthor` (+ `comments?: CommentWithAuthor[]`), `CommentWithAuthor`, états de formulaires (`CreatePostFormState`, `LikeToggleState`, `CommentFormState`, `DeletePostFormState`, `DeleteCommentFormState`).

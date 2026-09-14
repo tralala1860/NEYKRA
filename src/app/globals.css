@@ -20,6 +20,7 @@
   --neykra-text: #f5f3ff;
   --neykra-accent-1: #e11d48;
   --neykra-accent-2: #c026d3;
+  --neykra-on-accent: #ffffff;
 
   /* Couleurs de base (alias legacy mappés sur VOID) */
   --background: #050508;
@@ -84,6 +85,7 @@ html[data-universe="void"] {
   --neykra-text: #F5F3F7;
   --neykra-accent-1: #E11D48;
   --neykra-accent-2: #C026D3;
+  --neykra-on-accent: #ffffff;
 
   --background: #0A0006;
   --background-elevated: #0d0d14;
@@ -132,6 +134,7 @@ html[data-universe="neon_tokyo"] {
   --neykra-text: #E8F6FA;
   --neykra-accent-1: #22D3EE;
   --neykra-accent-2: #A78BFA;
+  --neykra-on-accent: #06080F;
 
   --background: #06080F;
   --background-elevated: #12122a;
@@ -174,6 +177,7 @@ html[data-universe="sakura"] {
   --neykra-text: #3B2A35;
   --neykra-accent-1: #F472B6;
   --neykra-accent-2: #C4B5FD;
+  --neykra-on-accent: #3B2A35;
 
   --background: #FFFBFD;
   --background-elevated: #ffeef2;
@@ -216,6 +220,7 @@ html[data-universe="inferno"] {
   --neykra-text: #FFF3EA;
   --neykra-accent-1: #FB923C;
   --neykra-accent-2: #EF4444;
+  --neykra-on-accent: #1A0D05;
 
   --background: #0D0704;
   --background-elevated: #170c06;
@@ -258,6 +263,7 @@ html[data-universe="zen"] {
   --neykra-text: #1A1A1A;
   --neykra-accent-1: #BC002D;
   --neykra-accent-2: #1A1A1A;
+  --neykra-on-accent: #ffffff;
 
   --background: #FAFAF8;
   --background-elevated: #efeadf;
@@ -551,4 +557,142 @@ html.transitioning {
 ::selection {
   background: var(--accent-subtle);
   color: var(--accent);
+}
+
+/* =====================================================================
+ * HERO ACCUEIL — direction "encre manga percutante" (page / uniquement)
+ * Tache d'encre, surlignage irrégulier, lignes de vitesse statiques,
+ * boutons à coins coupés. 100% piloté par les tokens --neykra-* de
+ * l'univers actif (aucune couleur en dur).
+ * ===================================================================== */
+
+/* --- 1. Conteneur hero + trame de points renforcée (opacity ~0.12) --- */
+.neykra-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.neykra-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(
+    circle,
+    var(--neykra-accent-1) 1.5px,
+    transparent 1.6px
+  );
+  background-size: 13px 13px;
+  opacity: 0.12;
+}
+
+/* --- 2. Lignes de vitesse franches, statiques, partant des coins vers le centre --- */
+.neykra-hero-lines {
+  position: absolute;
+  z-index: 0;
+  width: 42%;
+  height: 42%;
+  pointer-events: none;
+  opacity: 0.18;
+  background: repeating-linear-gradient(
+    var(--neykra-line-angle, 45deg),
+    var(--neykra-accent-1) 0 2px,
+    transparent 2px 16px
+  );
+}
+
+.neykra-hero-lines--tl {
+  top: 0;
+  left: 0;
+  --neykra-line-angle: 45deg;
+  -webkit-mask-image: linear-gradient(135deg, #000 0%, transparent 65%);
+  mask-image: linear-gradient(135deg, #000 0%, transparent 65%);
+}
+
+.neykra-hero-lines--tr {
+  top: 0;
+  right: 0;
+  --neykra-line-angle: -45deg;
+  -webkit-mask-image: linear-gradient(225deg, #000 0%, transparent 65%);
+  mask-image: linear-gradient(225deg, #000 0%, transparent 65%);
+}
+
+.neykra-hero-lines--bl {
+  bottom: 0;
+  left: 0;
+  --neykra-line-angle: -45deg;
+  -webkit-mask-image: linear-gradient(45deg, #000 0%, transparent 65%);
+  mask-image: linear-gradient(45deg, #000 0%, transparent 65%);
+}
+
+.neykra-hero-lines--br {
+  bottom: 0;
+  right: 0;
+  --neykra-line-angle: 45deg;
+  -webkit-mask-image: linear-gradient(315deg, #000 0%, transparent 65%);
+  mask-image: linear-gradient(315deg, #000 0%, transparent 65%);
+}
+
+/* --- 3. Titre : halo de lisibilité (contour couleur bg) par-dessus la tache d'encre --- */
+.neykra-hero-title {
+  -webkit-text-stroke: 2px var(--neykra-bg);
+  paint-order: stroke fill;
+}
+
+/* --- 4. Bandeau surlignage irrégulier (façon coup de marqueur, pas de bulle) --- */
+.neykra-highlight {
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
+}
+
+.neykra-highlight::before {
+  content: "";
+  position: absolute;
+  inset: -1px -14px -3px -12px;
+  z-index: -1;
+  background: var(--neykra-accent-1);
+  opacity: 0.92;
+  /* Rectangle légèrement irrégulier — bords obliques, pas de radius */
+  clip-path: polygon(
+    0.5% 14%,
+    24% 6%,
+    55% 12%,
+    100% 0%,
+    99.5% 78%,
+    72% 94%,
+    38% 88%,
+    0% 100%
+  );
+}
+
+/* --- 5. Boutons hero : coins coupés + bords irréguliers (coup de pinceau) --- */
+.neykra-btn-hero {
+  border-radius: 0;
+  /* Polygone anguleux : coins tranchés + micro-jitter sur les arêtes */
+  clip-path: polygon(
+    12px 0,
+    32% 3px,
+    64% 0,
+    calc(100% - 14px) 5px,
+    100% 10px,
+    calc(100% - 4px) 38%,
+    calc(100% - 7px) 72%,
+    100% calc(100% - 12px),
+    calc(100% - 12px) 100%,
+    58% calc(100% - 3px),
+    24% 100%,
+    10px calc(100% - 5px),
+    0 calc(100% - 10px),
+    4px 55%,
+    0 14px,
+    7px 2px
+  );
+  filter: drop-shadow(3px 3px 0 var(--neykra-accent-subtle));
+}
+
+.neykra-btn-hero:hover {
+  filter: drop-shadow(3px 3px 0 var(--neykra-accent-glow));
 }
