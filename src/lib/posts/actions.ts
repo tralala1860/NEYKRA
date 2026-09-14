@@ -8,14 +8,17 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type {
   CreatePostFormState,
-  LikeToggleState,
+  ReactionToggleState,
   CommentFormState,
   DeletePostFormState,
   DeleteCommentFormState,
   PostWithAuthor,
   PostMediaType,
   CommentWithAuthor,
+  ReactionCounts,
+  ReactionType,
 } from "./types";
+import { REACTION_TYPES } from "./types";
 
 const POST_CONTENT_MAX = 2000;
 const POST_MEDIA_MAX_BYTES = 5 * 1024 * 1024;
@@ -176,25 +179,30 @@ export async function getFeedPosts(): Promise<PostWithAuthor[]> {
 
   const postIds = posts.map((p) => p.id);
 
-  // Likes de l'utilisateur connecté (RLS filtre via post_visible_to_reader)
-  const { data: userLikes } = await supabase
+  // Réactions des posts (type par ligne — compteurs par type + réaction perso).
+  // La RLS likes_select filtre déjà la visibilité.
+  const { data: reactionRows, error: reactionsError } = await supabase
     .from("likes")
-    .select("post_id")
-    .match({ post_id: postIds, user_id: user.id });
-
-  const likedSet = new Set<string>(
-    (userLikes ?? []).map((l) => l.post_id)
-  );
-
-  // Nombre de likes par post
-  const { data: likeCounts } = await supabase
-    .from("likes")
-    .select("post_id")
+    .select("post_id, user_id, reaction_type")
     .in("post_id", postIds);
 
-  const likeCountMap = new Map<string, number>();
-  (likeCounts ?? []).forEach((l) => {
-    likeCountMap.set(l.post_id, (likeCountMap.get(l.post_id) ?? 0) + 1);
+  if (reactionsError) {
+    console.error("getFeedPosts reactions error:", reactionsError.message);
+  }
+
+  const reactionsByPost = new Map<string, ReactionCounts>();
+  const userReactionByPost = new Map<string, ReactionType>();
+  (reactionRows ?? []).forEach((r) => {
+    const type = r.reaction_type as ReactionType;
+    if (!REACTION_TYPES.includes(type)) return;
+
+    const counts = reactionsByPost.get(r.post_id) ?? {};
+    counts[type] = (counts[type] ?? 0) + 1;
+    reactionsByPost.set(r.post_id, counts);
+
+    if (r.user_id === user.id) {
+      userReactionByPost.set(r.post_id, type);
+    }
   });
 
   // Nombre de commentaires par post
@@ -286,84 +294,124 @@ export async function getFeedPosts(): Promise<PostWithAuthor[]> {
       author_display_name: profiles?.display_name ?? null,
       author_avatar_url: profiles?.avatar_url ?? null,
       author_otaku_rank: profiles?.otaku_status?.rang ?? null,
-      like_count: likeCountMap.get(row.id) ?? 0,
+      reactions: reactionsByPost.get(row.id) ?? {},
+      user_reaction: userReactionByPost.get(row.id) ?? null,
       comment_count: commentCountMap.get(row.id) ?? 0,
-      has_liked: likedSet.has(row.id),
       comments: commentsMap.get(row.id) ?? [],
     };
   });
 }
 
 // ---------------------------------------------------------------------------
-// Toggle like : ajoute ou retire le like d'un post.
+// Toggle réaction (migration 005 — 6 réactions manga, une seule par
+// utilisateur par post, modèle Facebook) :
+// - pas encore réagi        → insère la réaction choisie
+// - même réaction déjà posée → supprime (toggle off)
+// - réaction différente     → remplace par le nouveau type
 // ---------------------------------------------------------------------------
 
-export async function toggleLike(
-  _prevState: LikeToggleState,
-  formData: FormData
-): Promise<LikeToggleState> {
+export async function toggleReaction(
+  postId: string,
+  reactionType: string
+): Promise<ReactionToggleState> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { error: "Non connecté.", liked: false, like_count: 0 };
+    return { error: "Non connecté.", reactions: {}, user_reaction: null };
   }
 
-  const postId = String(formData.get("postId") ?? "");
   if (!postId) {
-    return { error: "Post invalide.", liked: false, like_count: 0 };
+    return { error: "Post invalide.", reactions: {}, user_reaction: null };
   }
 
-  // Vérifier si le like existe déjà
-  const { data: existingLike } = await supabase
+  // Validation côté serveur : le type doit faire partie des 6 réactions.
+  if (!REACTION_TYPES.includes(reactionType as ReactionType)) {
+    return { error: "Réaction invalide.", reactions: {}, user_reaction: null };
+  }
+  const type = reactionType as ReactionType;
+
+  // Réaction existante de l'utilisateur sur ce post (UNIQUE post_id + user_id,
+  // migration 005 → at most une ligne).
+  const { data: existing } = await supabase
     .from("likes")
-    .select("id")
+    .select("id, reaction_type")
     .eq("post_id", postId)
     .eq("user_id", user.id)
     .maybeSingle();
 
-  let liked: boolean;
-  let like_count: number;
+  let userReaction: ReactionType | null = type;
 
-  if (existingLike) {
-    // Retirer le like
-    const { error } = await supabase
-      .from("likes")
-      .delete()
-      .eq("id", existingLike.id);
+  if (existing) {
+    if (existing.reaction_type === type) {
+      // Toggle off : même réaction → suppression
+      const { error } = await supabase
+        .from("likes")
+        .delete()
+        .eq("id", existing.id);
 
-    if (error) {
-      console.error("toggleLike delete error:", error.message);
-      return { error: "Impossible de retirer le like.", liked: true, like_count: 0 };
+      if (error) {
+        console.error("toggleReaction delete error:", error.message);
+        return {
+          error: "Impossible de retirer la réaction.",
+          reactions: {},
+          user_reaction: existing.reaction_type as ReactionType,
+        };
+      }
+      userReaction = null;
+    } else {
+      // Remplacement : une seule réaction par utilisateur par post
+      const { error } = await supabase
+        .from("likes")
+        .update({ reaction_type: type })
+        .eq("id", existing.id);
+
+      if (error) {
+        console.error("toggleReaction update error:", error.message);
+        return {
+          error: "Impossible de changer la réaction.",
+          reactions: {},
+          user_reaction: existing.reaction_type as ReactionType,
+        };
+      }
     }
-    liked = false;
   } else {
-    // Ajouter le like (RLS : posts_delete_own ne s'applique pas, likes_insert_own check user_id)
+    // Nouvelle réaction (RLS likes_insert_own check user_id)
     const { error } = await supabase.from("likes").insert({
       post_id: postId,
       user_id: user.id,
+      reaction_type: type,
     });
 
     if (error) {
-      console.error("toggleLike insert error:", error.message);
-      return { error: "Impossible d'ajouter le like.", liked: false, like_count: 0 };
+      console.error("toggleReaction insert error:", error.message);
+      return { error: "Impossible d'ajouter la réaction.", reactions: {}, user_reaction: null };
     }
-    liked = true;
   }
 
-  // Recalcul du nombre de likes
-  const { count } = await supabase
+  // Recompte par type de réaction sur le post
+  const { data: rows, error: countError } = await supabase
     .from("likes")
-    .select("*", { count: "exact", head: true })
+    .select("reaction_type")
     .eq("post_id", postId);
 
-  like_count = count ?? 0;
+  if (countError) {
+    console.error("toggleReaction count error:", countError.message);
+    return { error: "Impossible de compter les réactions.", reactions: {}, user_reaction: userReaction };
+  }
 
-  // Revalidation du feed et des pages de profil
+  const reactions: ReactionCounts = {};
+  (rows ?? []).forEach((r) => {
+    const t = r.reaction_type as ReactionType;
+    if (!REACTION_TYPES.includes(t)) return;
+    reactions[t] = (reactions[t] ?? 0) + 1;
+  });
+
+  // Revalidation du feed
   revalidatePath("/feed");
-  return { liked, like_count };
+  return { reactions, user_reaction: userReaction };
 }
 
 // ---------------------------------------------------------------------------

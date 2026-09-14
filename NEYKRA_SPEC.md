@@ -65,7 +65,8 @@ Binate travaille **seul**, avec un **agent IA en sessions successives** (Claude 
 id, author_id, content, media_url, media_type ('image' / 'video' / 'gif'), created_at
 
 ### `likes`
-id, post_id, user_id, created_at
+id, post_id, user_id, reaction_type text ('like' / 'love' / 'haha' / 'wow' / 'sad' / 'fire', défaut 'like' — migration 005), created_at
+Contrainte UNIQUE (post_id, user_id) : une seule réaction par utilisateur par post (modèle Facebook)
 
 ### `comments`
 id, post_id, author_id, content, created_at

@@ -1,7 +1,21 @@
-// NEYKRA — Types pour les posts / likes / commentaires (Phase 2, étape 2).
+// NEYKRA — Types pour les posts / réactions / commentaires (Phase 2, étape 2).
 // Exportés depuis src/lib/posts/actions.ts et les composants feed.
 
 export type PostMediaType = "image" | "video" | "gif";
+
+// 6 réactions manga (migration 005 — remplace le like binaire).
+export const REACTION_TYPES = [
+  "like",
+  "love",
+  "haha",
+  "wow",
+  "sad",
+  "fire",
+] as const;
+
+export type ReactionType = (typeof REACTION_TYPES)[number];
+
+export type ReactionCounts = Partial<Record<ReactionType, number>>;
 
 export type PostRow = {
   id: string;
@@ -17,9 +31,11 @@ export type PostWithAuthor = PostRow & {
   author_display_name: string | null;
   author_avatar_url: string | null;
   author_otaku_rank: string | null;
-  like_count: number;
+  /** Décompte des réactions par type (seuls les types présents figurent). */
+  reactions: ReactionCounts;
+  /** Réaction de l'utilisateur courant sur ce post (null si aucune). */
+  user_reaction: ReactionType | null;
   comment_count: number;
-  has_liked: boolean;
   comments?: CommentWithAuthor[];
 };
 
@@ -28,10 +44,10 @@ export type CreatePostFormState = {
   success?: string;
 };
 
-export type LikeToggleState = {
+export type ReactionToggleState = {
   error?: string;
-  liked: boolean;
-  like_count: number;
+  reactions: ReactionCounts;
+  user_reaction: ReactionType | null;
 };
 
 export type CommentFormState = {
