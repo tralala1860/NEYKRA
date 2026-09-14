@@ -2,6 +2,17 @@
 
 > À mettre à jour à la fin de chaque session de développement (Claude Code, Cline ou autre).
 > Format : date, ce qui a été fait, ce qui reste à faire / bugs connus.
+## [14/09/2026] — Session 5 — Phase 2, étape 2 : posts, fil d'actualité, likes, commentaires
+
+- **Server Actions `src/lib/posts/actions.ts`** : `createPost` (texte et/ou média uploadé vers le bucket Storage `posts`, détection MIME, max 5 Mo), `getFeedPosts` (50 posts les plus récents, join `profiles` + `otaku_status`, compteurs likes/commentaires, `has_liked`, **commentaires chargés en une requête avec join profiles et groupés par post**), `toggleLike`, `addComment`, `deletePost`, `deleteComment`. S'appuie sur la RLS existante (`post_visible_to_reader`, `*_delete_own`) pour la visibilité et les permissions.
+- **Types `src/lib/posts/types.ts`** : `PostWithAuthor` (+ `comments?: CommentWithAuthor[]`), `CommentWithAuthor`, états de formulaires (`CreatePostFormState`, `LikeToggleState`, `CommentFormState`, `DeletePostFormState`, `DeleteCommentFormState`).
+- **Migration `supabase/migrations/004b_posts_storage.sql` (À EXÉCUTER dans le SQL Editor Supabase)** : bucket public `posts` + 4 policies storage (lecture publique, écriture/modif/suppression réservées au dossier `<userId>/...`). Idempotente.
+- **Composants `/feed`** : `create-post-form.tsx` (Card + textarea + upload média), `post-card.tsx` (Card : avatar, auteur lié au profil, badge rang otaku, date relative via `time-ago.ts`, média image/vidéo/gif, bouton like avec glow Button en état actif, commentaires), `comment-list.tsx`, `comment-form.tsx`, `logout-button.tsx`. Aucun HTML custom stylé à la main — Button/Card/Badge de `src/components/ui/` partout.
+- **Corrections de bugs de build** : import `PostMediaType`/`CommentWithAuthor` manquants dans `actions.ts`, JSX invalide `href="/profile/" + x` → template literals (`post-card.tsx`, `comment-list.tsx`), `CommentList` reçoit désormais `comments` (au lieu d'un `postId` inutilisé), casts Supabase `as unknown as`, `form action` retour `Promise<void>`, message d'erreur `createPost` référençant le vrai fichier `004b_posts_storage.sql`, code mort `selfProfile/selfId` retiré.
+- **Qualité** : `npm run build` ✓ (compilation + TypeScript OK).
+- **À FAIRE côté humain** : exécuter `supabase/migrations/004b_posts_storage.sql` dans le SQL Editor Supabase (sinon l'upload de média affichera une erreur explicite).
+
+
 
 ## [13/09/2026] — Session 4 — Migration vers le système 5 univers (fondations)
 

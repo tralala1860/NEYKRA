@@ -3,10 +3,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { LogoutButton } from "./logout-button";
+import { CreatePostForm } from "./create-post-form";
+import { PostCard } from "./post-card";
+import { getFeedPosts } from "@/lib/posts/actions";
+import type { PostWithAuthor } from "@/lib/posts/types";
 
 export const metadata: Metadata = {
-  title: "Fil d'actualité — NEYKRA",
-  description: "Ton fil d'actualité NEYKRA.",
+  title: "Fil d'actualite — NEYKRA",
+  description: "Ton fil d'actualite NEYKRA.",
 };
 
 export default async function FeedPage() {
@@ -15,46 +19,75 @@ export default async function FeedPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Double sécurité avec le proxy (src/proxy.ts) : /feed exige une session.
   if (!user) {
     redirect("/login");
   }
 
+  const posts = await getFeedPosts();
+
+  const postsWithOwner = posts.map((p: PostWithAuthor) => ({
+    ...p,
+    isOwner: p.author_id === user.id,
+  }));
+
   return (
-    <div className="flex min-h-full flex-1 flex-col">
-      <header className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--surface)] px-6 py-4">
-        <Link
-          href="/"
-          className="text-lg font-display text-[var(--text-primary)] hover:opacity-80 transition-opacity"
-        >
-          NEYKRA
-        </Link>
-        <div className="flex items-center gap-4">
+    <div className="flex min-h-screen flex-col">
+      <header className="sticky top-0 z-10 border-b border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
           <Link
-            href="/settings"
-            className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
+            href="/"
+            className="font-display text-xl text-[var(--text-primary)] hover:opacity-80 transition-opacity"
           >
-            Paramètres
+            NEYKRA
           </Link>
-          <LogoutButton />
+
+          <div className="flex items-center gap-4">
+            <Link
+              href="/settings"
+              className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
+            >
+              Parametres
+            </Link>
+            <LogoutButton />
+          </div>
         </div>
       </header>
 
-      <main className="flex flex-1 flex-col items-center justify-center px-6">
-        <h1 className="text-2xl font-display text-[var(--text-primary)]">
-          Fil d&apos;actualité à venir
-        </h1>
-        <p className="mt-2 text-sm text-[var(--text-secondary)]">
-          Connecté en tant que{" "}
-          <span className="font-medium text-[var(--text-primary)]">
-            {user.email ?? user.id}
-          </span>
-        </p>
-        <p className="mt-10 max-w-md text-center text-sm text-[var(--text-tertiary)]">
-          Le fil d&apos;actualité sera développé en Phase 2 : création de posts,
-          likes, commentaires…
-        </p>
+      <main className="flex-1 px-4 py-6">
+        <div className="mx-auto max-w-2xl flex flex-col gap-6">
+          <CreatePostForm />
+          <div className="border-t border-[var(--border)]" />
+
+          {postsWithOwner.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="font-display text-4xl text-[var(--accent)]">0</div>
+              <h2 className="mt-3 font-display text-lg text-[var(--text-primary)]">
+                Aucune publication
+              </h2>
+              <p className="mt-1 max-w-sm text-sm text-[var(--text-secondary)]">
+                Sois le premier a partager quelque chose avec la communaute !
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-6">
+              {postsWithOwner.map((post) => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  isOwner={post.isOwner}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </main>
+
+      <footer className="mt-auto border-t border-[var(--border)] bg-[var(--surface)] py-4">
+        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 text-xs text-[var(--text-tertiary)]">
+          <span>NEYKRA — Reseau social manga</span>
+          <span>Parametres &middot; CGU &middot; Confidentialite</span>
+        </div>
+      </footer>
     </div>
   );
 }
