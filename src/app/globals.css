@@ -21,6 +21,10 @@
   --neykra-accent-1: #e11d48;
   --neykra-accent-2: #c026d3;
   --neykra-on-accent: #ffffff;
+  /* Encre : constante de style manga, identique dans les 5 univers */
+  --neykra-ink: #111111;
+
+
 
   /* Couleurs de base (alias legacy mappés sur VOID) */
   --background: #050508;
@@ -588,24 +592,37 @@ html.transitioning {
   opacity: 0.12;
 }
 
-/* --- 2. Lignes de vitesse franches, statiques, partant des coins vers le centre --- */
+/* --- 2. Lignes de vitesse dessinées à la main : trois nappes désalignées
+   (angle / espacement / épaisseur différents) + taille et opacité propres
+   à chaque coin, pour éviter l'effet pattern généré --- */
 .neykra-hero-lines {
   position: absolute;
   z-index: 0;
-  width: 42%;
-  height: 42%;
   pointer-events: none;
-  opacity: 0.18;
-  background: repeating-linear-gradient(
-    var(--neykra-line-angle, 45deg),
-    var(--neykra-accent-1) 0 2px,
-    transparent 2px 16px
-  );
+  background:
+    repeating-linear-gradient(
+      var(--neykra-line-angle, 45deg),
+      var(--neykra-accent-1) 0 2px,
+      transparent 2px 15px
+    ),
+    repeating-linear-gradient(
+      calc(var(--neykra-line-angle, 45deg) + 5deg),
+      var(--neykra-accent-1) 0 1px,
+      transparent 1px 24px
+    ),
+    repeating-linear-gradient(
+      calc(var(--neykra-line-angle, 45deg) - 3deg),
+      var(--neykra-accent-2) 0 1px,
+      transparent 1px 37px
+    );
 }
 
 .neykra-hero-lines--tl {
   top: 0;
   left: 0;
+  width: 40%;
+  height: 46%;
+  opacity: 0.2;
   --neykra-line-angle: 45deg;
   -webkit-mask-image: linear-gradient(135deg, #000 0%, transparent 65%);
   mask-image: linear-gradient(135deg, #000 0%, transparent 65%);
@@ -614,6 +631,9 @@ html.transitioning {
 .neykra-hero-lines--tr {
   top: 0;
   right: 0;
+  width: 34%;
+  height: 38%;
+  opacity: 0.15;
   --neykra-line-angle: -45deg;
   -webkit-mask-image: linear-gradient(225deg, #000 0%, transparent 65%);
   mask-image: linear-gradient(225deg, #000 0%, transparent 65%);
@@ -622,6 +642,9 @@ html.transitioning {
 .neykra-hero-lines--bl {
   bottom: 0;
   left: 0;
+  width: 46%;
+  height: 34%;
+  opacity: 0.14;
   --neykra-line-angle: -45deg;
   -webkit-mask-image: linear-gradient(45deg, #000 0%, transparent 65%);
   mask-image: linear-gradient(45deg, #000 0%, transparent 65%);
@@ -630,15 +653,40 @@ html.transitioning {
 .neykra-hero-lines--br {
   bottom: 0;
   right: 0;
+  width: 38%;
+  height: 48%;
+  opacity: 0.22;
   --neykra-line-angle: 45deg;
   -webkit-mask-image: linear-gradient(315deg, #000 0%, transparent 65%);
   mask-image: linear-gradient(315deg, #000 0%, transparent 65%);
 }
 
-/* --- 3. Titre : halo de lisibilité (contour couleur bg) par-dessus la tache d'encre --- */
+/* --- 3. Titres : halo de lisibilité (contour épais couleur bg + halo progressif) par-dessus l'encre --- */
 .neykra-hero-title {
-  -webkit-text-stroke: 2px var(--neykra-bg);
+  -webkit-text-stroke: 5px var(--neykra-bg);
   paint-order: stroke fill;
+  filter: drop-shadow(0 3px 10px var(--neykra-bg)) drop-shadow(0 0 6px var(--neykra-bg));
+}
+
+/* Titre de marque (home uniquement) : lettrage encre/pinceau — le filtre SVG
+   #neykra-brush (feTurbulence + feDisplacementMap, défini dans la page) déforme
+   les contours, les text-shadows décalés cassent la régularité de la police. */
+.neykra-title-brand {
+  text-shadow:
+    3px 2px 0 var(--neykra-bg),
+    -2px 3px 0 var(--neykra-bg),
+    2px -2px 0 var(--neykra-bg),
+    -3px -1px 0 var(--neykra-bg);
+  filter: url(#neykra-brush) drop-shadow(0 3px 10px var(--neykra-bg))
+    drop-shadow(0 0 6px var(--neykra-bg));
+}
+
+/* Titres de pages secondaires (Connexion, Inscription…) : effet BD/comic —
+   contour encre épais et net + ombre décalée dure, façon onomatopée de manga. */
+.neykra-title-page {
+  -webkit-text-stroke: 6px var(--neykra-ink);
+  filter: drop-shadow(0 3px 10px var(--neykra-bg)) drop-shadow(0 0 6px var(--neykra-bg))
+    drop-shadow(5px 5px 0 var(--neykra-ink));
 }
 
 /* --- 4. Bandeau surlignage irrégulier (façon coup de marqueur, pas de bulle) --- */
