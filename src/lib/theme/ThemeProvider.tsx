@@ -74,14 +74,25 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 const DEFAULT_MODE: ColorMode = "dark";
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
+export function ThemeProvider({
+  children,
+  initialUniverse = DEFAULT_UNIVERSE,
+}: {
+  children: ReactNode;
+  /**
+   * Univers déjà posé côté serveur dans le HTML initial (layout) : état
+   * initial, jamais écrasé au montage — ne change que sur action réelle
+   * (updateUniverse/transitionUniverse) ou si le profil distant diffère.
+   */
+  initialUniverse?: Universe;
+}) {
   const supabase = useSupabase();
-  const [universe, setUniverse] = useState<Universe>(DEFAULT_UNIVERSE);
+  const [universe, setUniverse] = useState<Universe>(initialUniverse);
   const [colorMode] = useState<ColorMode>(DEFAULT_MODE);
   const [isLoading, setIsLoading] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  // Charger la préférence d'univers du profil au montage
+  // Resynchronise avec le profil distant SANS valeur par défaut intermédiaire
   useEffect(() => {
     async function loadPreferences() {
       if (!supabase) {
@@ -114,11 +125,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       }
 
       if (profile) {
-        setUniverse(
-          normalizeUniverse(
-            (profile as { theme_preference?: unknown }).theme_preference
-          )
+        const remote = normalizeUniverse(
+          (profile as { theme_preference?: unknown }).theme_preference
         );
+        // Jamais de retour à une valeur par défaut au montage : l'état vient
+        // déjà du serveur ; on n'adopte la valeur distante que si elle
+        // diffère réellement (ex. changée sur un autre appareil).
+        setUniverse((current) => (current === remote ? current : remote));
       }
 
       setIsLoading(false);
