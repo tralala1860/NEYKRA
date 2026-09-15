@@ -1,5 +1,7 @@
-// NEYKRA — Server Actions des amis (Phase 3, étape 1) : demande, acceptation,
-// refus/annulation, retrait (unfriend) et lecture de l'état de la relation.
+// NEYKRA — Server Actions des amis (Phase 3, étapes 1-2) : demande,
+// acceptation, refus/annulation, retrait (unfriend), lecture de l'état de la
+// relation et listes pour la page /friends (getFriendsList,
+// getPendingReceived, getPendingSent).
 // S'appuie sur la RLS de supabase/schema.sql §6.5 (friendships) :
 //   select : user_id = auth.uid() or friend_id = auth.uid()
 //   insert : with check (user_id = auth.uid())
@@ -435,4 +437,248 @@ export async function removeFriend(
   }
 
   return { success: "Amitié retirée.", state: NO_RELATION };
+}
+
+export type FriendProfile = {
+  id: string;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  /** Rang otaku (table otaku_status) — null si absent ou illisible (RLS). */
+  otaku_rank: string | null;
+};
+
+export type FriendListEntry = {
+  /** Id de la ligne friendships (pour accepter, refuser/annuler, retirer). */
+  friendshipId: string;
+  /** Profil de l'autre partie de la relation (affichage + lien). */
+  profile: FriendProfile;
+};
+
+/** Demande en attente : même forme (profil de l'autre partie + id de ligne). */
+export type PendingFriendRequest = FriendListEntry;
+
+type FriendProfileRow = {
+  id: string;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  otaku_status?: { rang: string } | { rang: string }[] | null;
+};
+
+function otherIdOf(row: FriendshipRow, userId: string): string {
+  return row.user_id === userId ? row.friend_id : row.user_id;
+}
+
+/**
+ * Profils des autres parties d'une liste de relations, avec rang otaku quand
+ * il est lisible. Même pattern de jointure que getFeedPosts/getPostsByAuthor
+ * dans src/lib/posts/actions.ts : `profiles (..., otaku_status (rang))`.
+ * Les profils illisibles (compte supprimé, privé ou bloqué — la RLS de
+ * profiles ne les renvoie pas) sont absents de la map et donc ignorés par les
+ * appelants plutôt qu'affichés sans nom.
+ */
+async function fetchFriendProfiles(
+  supabase: ServerSupabaseClient,
+  ids: string[]
+): Promise<Map<string, FriendProfile>> {
+  const byId = new Map<string, FriendProfile>();
+  const uniqueIds = [...new Set(ids.filter((id) => Boolean(id)))];
+
+  if (uniqueIds.length === 0) {
+    return byId;
+  }
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, username, display_name, avatar_url, otaku_status (rang)")
+    .in("id", uniqueIds);
+
+  if (error) {
+    console.error("fetchFriendProfiles error:", error.message);
+    return byId;
+  }
+
+  for (const row of (data ?? []) as FriendProfileRow[]) {
+    const status = row.otaku_status;
+    const rank = Array.isArray(status)
+      ? (status[0]?.rang ?? null)
+      : (status?.rang ?? null);
+    byId.set(row.id, {
+      id: row.id,
+      username: row.username,
+      display_name: row.display_name,
+      avatar_url: row.avatar_url,
+      otaku_rank: rank,
+    });
+  }
+
+  return byId;
+}
+
+/**
+ * Amis actuels : relations `accepted` où l'utilisateur connecté est `user_id`
+ * OU `friend_id`. Renvoie les profils des autres parties.
+ * Non connecté (impossible via la page protégée) : tableau vide.
+ */
+export async function getFriendsList(): Promise<FriendListEntry[]> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return [];
+  }
+
+  const [mine, theirs] = await Promise.all([
+    supabase
+      .from("friendships")
+      .select("id, user_id, friend_id, status")
+      .eq("user_id", user.id)
+      .eq("status", "accepted")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("friendships")
+      .select("id, user_id, friend_id, status")
+      .eq("friend_id", user.id)
+      .eq("status", "accepted")
+      .order("created_at", { ascending: false }),
+  ]);
+
+  if (mine.error) {
+    console.error("getFriendsList (sent) error:", mine.error.message);
+  }
+  if (theirs.error) {
+    console.error("getFriendsList (received) error:", theirs.error.message);
+  }
+  if (mine.error || theirs.error) {
+    return [];
+  }
+
+  const rows = [
+    ...((mine.data ?? []) as FriendshipRow[]),
+    ...((theirs.data ?? []) as FriendshipRow[]),
+  ].filter((row) => row.status === "accepted");
+
+  if (rows.length === 0) {
+    return [];
+  }
+
+  const byId = await fetchFriendProfiles(
+    supabase,
+    rows.map((row) => otherIdOf(row, user.id))
+  );
+
+  const friends: FriendListEntry[] = [];
+  for (const row of rows) {
+    const profile = byId.get(otherIdOf(row, user.id));
+    if (profile) {
+      friends.push({ friendshipId: row.id, profile });
+    }
+  }
+
+  return friends;
+}
+
+/**
+ * Demandes reçues en attente : relations `pending` où l'utilisateur connecté
+ * est `friend_id`. Profil du demandeur + id de la ligne.
+ * Non connecté : tableau vide.
+ */
+export async function getPendingReceived(): Promise<PendingFriendRequest[]> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("friendships")
+    .select("id, user_id, friend_id, status")
+    .eq("friend_id", user.id)
+    .eq("status", "pending")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("getPendingReceived error:", error.message);
+    return [];
+  }
+
+  const rows = ((data ?? []) as FriendshipRow[]).filter(
+    (row) => row.status === "pending"
+  );
+
+  if (rows.length === 0) {
+    return [];
+  }
+
+  const byId = await fetchFriendProfiles(
+    supabase,
+    rows.map((row) => row.user_id)
+  );
+
+  const received: PendingFriendRequest[] = [];
+  for (const row of rows) {
+    const profile = byId.get(row.user_id);
+    if (profile) {
+      received.push({ friendshipId: row.id, profile });
+    }
+  }
+
+  return received;
+}
+
+/**
+ * Demandes envoyées en attente : relations `pending` où l'utilisateur
+ * connecté est `user_id`. Profil du destinataire + id de la ligne.
+ * Non connecté : tableau vide.
+ */
+export async function getPendingSent(): Promise<PendingFriendRequest[]> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("friendships")
+    .select("id, user_id, friend_id, status")
+    .eq("user_id", user.id)
+    .eq("status", "pending")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("getPendingSent error:", error.message);
+    return [];
+  }
+
+  const rows = ((data ?? []) as FriendshipRow[]).filter(
+    (row) => row.status === "pending"
+  );
+
+  if (rows.length === 0) {
+    return [];
+  }
+
+  const byId = await fetchFriendProfiles(
+    supabase,
+    rows.map((row) => row.friend_id)
+  );
+
+  const sent: PendingFriendRequest[] = [];
+  for (const row of rows) {
+    const profile = byId.get(row.friend_id);
+    if (profile) {
+      sent.push({ friendshipId: row.id, profile });
+    }
+  }
+
+  return sent;
 }

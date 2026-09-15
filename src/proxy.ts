@@ -50,7 +50,9 @@ export async function proxy(request: NextRequest) {
     pathname === "/settings" ||
     pathname.startsWith("/settings/") ||
     pathname === "/profile/edit" ||
-    pathname.startsWith("/profile/edit/");
+    pathname.startsWith("/profile/edit/") ||
+    pathname === "/friends" ||
+    pathname.startsWith("/friends/");
   const isAuthPage = pathname === "/login" || pathname === "/signup";
 
   if (isProtectedPage && !user) {
