@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { updateProfile } from "@/lib/profile/actions";
 import type { AvatarFormState } from "@/lib/profile/actions";
@@ -52,6 +52,9 @@ type CardProps2 = {
 function AvatarCard(p: CardProps2) {
   const square = "[&>*]:rounded-none";
   const imgStyle: CSSProperties = { borderRadius: 0, boxShadow: "3px 3px 0 var(--accent)" };
+  const avatarRef = useRef<HTMLInputElement>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [clientError, setClientError] = useState<string | null>(null);
   return (
     <div className="flex flex-col gap-6">
       <Card padding="lg" className={square}>
@@ -65,10 +68,17 @@ function AvatarCard(p: CardProps2) {
           )}
           <p className="text-xs text-[var(--text-tertiary)]">PNG, JPEG, WebP ou GIF — 2 Mo maximum.</p>
         </div>
-        <form action={p.aAction} className="mt-4 flex flex-col gap-3">
+        <form action={p.aAction} className="mt-4 flex flex-col gap-3" onSubmit={(e) => { if (!avatarRef.current?.files?.[0]) { e.preventDefault(); setClientError("Choisis une photo avant d'envoyer."); } }}>
           {p.aState.success ? <div role="status" className="rounded-lg border border-[var(--color-success)]/30 bg-[var(--color-success)]/10 px-4 py-3 text-sm text-[var(--color-success)]">{p.aState.success}</div> : null}
           {p.aState.error ? <div role="alert" className="rounded-lg border border-[var(--color-error)]/30 bg-[var(--color-error)]/10 px-4 py-3 text-sm text-[var(--color-error)]">{p.aState.error}</div> : null}
-          <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp,image/gif" required className="text-sm text-[var(--text-secondary)]" />
+          {clientError ? <div role="alert" className="rounded-lg border border-[var(--color-error)]/30 bg-[var(--color-error)]/10 px-4 py-3 text-sm text-[var(--color-error)]">{clientError}</div> : null}
+          <input ref={avatarRef} type="file" name="avatar" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={(e) => { setFileName(e.target.files?.[0]?.name ?? null); setClientError(null); }} />
+          <div className="flex flex-wrap items-center gap-3">
+            <Button type="button" variant="secondary" onClick={() => avatarRef.current?.click()}>Changer l&apos;avatar</Button>
+            {fileName ? (
+              <span className="max-w-full truncate text-xs text-[var(--text-secondary)]">{fileName}</span>
+            ) : null}
+          </div>
           <div>
             <Button type="submit" variant="secondary" disabled={p.aPending} loading={p.aPending}>{p.aPending ? "Envoi…" : "Envoyer l'avatar"}</Button>
           </div>

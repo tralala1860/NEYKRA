@@ -4,7 +4,7 @@
 
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { createPost } from "@/lib/posts/actions";
@@ -18,6 +18,8 @@ export function CreatePostForm() {
     createPost,
     {} as CreatePostFormState
   );
+  const mediaRef = useRef<HTMLInputElement>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
 
   return (
     <Card padding="lg" className="w-full max-w-2xl">
@@ -54,15 +56,26 @@ export function CreatePostForm() {
         />
 
         <div className="flex flex-wrap items-center gap-3">
-          <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-[var(--text-secondary)]">
-            <span className="font-medium">Ajouter un média</span>
-            <input
-              type="file"
-              name="media"
-              accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm"
-              className="block text-sm"
-            />
-          </label>
+          <input
+            ref={mediaRef}
+            type="file"
+            name="media"
+            accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm"
+            className="hidden"
+            onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
+          />
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => mediaRef.current?.click()}
+          >
+            Choisir une photo
+          </Button>
+          {fileName ? (
+            <span className="max-w-full truncate text-xs text-[var(--text-secondary)]">
+              {fileName}
+            </span>
+          ) : null}
 
           <p className="text-xs text-[var(--text-tertiary)]">
             PNG, JPEG, WebP, GIF, MP4 ou WebM — 5 Mo maximum
