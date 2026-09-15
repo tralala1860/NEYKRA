@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileByUsername } from "@/lib/profile/actions";
+import { getPostsByAuthor } from "@/lib/posts/actions";
+import { PostCard } from "@/app/feed/post-card";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { ProfileLinkButton } from "./profile-link-button";
@@ -64,6 +66,9 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   } = await supabase.auth.getUser();
   const isOwn = user?.id === profile.id;
 
+  // Posts de cet utilisateur, visibles selon la même RLS que le fil principal.
+  const posts = await getPostsByAuthor(profile.id);
+
   const displayName = profile.display_name?.trim() || profile.username;
   const initial = (displayName[0] ?? "?").toUpperCase();
   // Glow autour de l'avatar si statut Otaku actif (NEYKRA_SPEC §8ter).
@@ -82,6 +87,9 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           @{profile.username}
         </span>
         {otakuRank ? <Badge variant="accent">{otakuRank}</Badge> : null}
+        <span className="text-sm text-[var(--text-tertiary)]">
+          {posts.length} {posts.length > 1 ? "publications" : "publication"}
+        </span>
       </div>
 
       <div className="mt-6">
@@ -146,6 +154,25 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           ← Retour au fil
         </Link>
       </p>
+
+      {/* Publications de l'utilisateur — mêmes cards que le fil principal */}
+      <section className="mt-10">
+        <h2 className="font-display text-lg text-[var(--text-primary)]">
+          Publications
+        </h2>
+
+        {posts.length === 0 ? (
+          <p className="mt-4 text-sm text-[var(--text-tertiary)]">
+            Aucune publication pour l'instant.
+          </p>
+        ) : (
+          <div className="mt-4 flex flex-col gap-6">
+            {posts.map((post) => (
+              <PostCard key={post.id} post={post} isOwner={isOwn} />
+            ))}
+          </div>
+        )}
+      </section>
     </main>
   );
 }

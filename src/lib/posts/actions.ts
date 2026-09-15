@@ -135,10 +135,24 @@ export async function createPost(
 }
 
 // ---------------------------------------------------------------------------
-// Fil d'actualité : posts visibles par l'utilisateur connecté.
+// Interne partagé : charge les posts visibles par l'utilisateur connecté
+// (RLS posts_select = soi / ami accepté / public non bloqué) avec tous les
+// métadonnées du fil : join profiles + otaku_status, réactions décomptées
+// par type, réaction de l'utilisateur courant, compteur + commentaires.
+// Utilisé par getFeedPosts (fil principal) et getPostsByAuthor (profil).
 // ---------------------------------------------------------------------------
+const PROFILE_POSTS_LIMIT = 30;
 
-export async function getFeedPosts(): Promise<PostWithAuthor[]> {
+type FetchVisiblePostsOptions = {
+  /** Si renseigné, filtre sur un auteur précis (page profil). Sinon tout le fil. */
+  authorId?: string | null;
+  /** Limite du nombre de posts (null = pas de limite explicite). */
+  limit?: number | null;
+};
+
+async function fetchVisiblePostsWithMeta(
+  options: FetchVisiblePostsOptions = {}
+): Promise<PostWithAuthor[]> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -149,7 +163,7 @@ export async function getFeedPosts(): Promise<PostWithAuthor[]> {
   }
 
   // posts_select RLS filtre déjà : auteur = soi, ami accepté, ou profil public non bloqué
-  const { data: posts, error } = await supabase
+  let query = supabase
     .from("posts")
     .select(`
       id,
@@ -165,11 +179,19 @@ export async function getFeedPosts(): Promise<PostWithAuthor[]> {
         otaku_status (rang)
       )
     `)
-    .order("created_at", { ascending: false })
-    .limit(50);
+    .order("created_at", { ascending: false });
+
+  if (options.authorId) {
+    query = query.eq("author_id", options.authorId);
+  }
+  if (options.limit != null) {
+    query = query.limit(options.limit);
+  }
+
+  const { data: posts, error } = await query;
 
   if (error) {
-    console.error("getFeedPosts error:", error.message);
+    console.error("fetchVisiblePostsWithMeta error:", error.message);
     return [];
   }
 
@@ -300,6 +322,32 @@ export async function getFeedPosts(): Promise<PostWithAuthor[]> {
       comments: commentsMap.get(row.id) ?? [],
     };
   });
+}
+
+
+
+// ---------------------------------------------------------------------------
+// Fil d'actualité : posts visibles par l'utilisateur connecté.
+// ---------------------------------------------------------------------------
+
+export async function getFeedPosts(): Promise<PostWithAuthor[]> {
+  return fetchVisiblePostsWithMeta({ limit: 50 });
+}
+
+// ---------------------------------------------------------------------------
+// Posts d'un auteur précis (page profil) : même visibilité RLS que le fil
+// principal (le visiteur ne voit que les posts autorisés — ses propres posts
+// si c'est son profil, sinon selon public/ami/blocage). Tri date décroissante,
+// limite raisonnable de 30 (profil, pas le fil principal).
+// ---------------------------------------------------------------------------
+
+export async function getPostsByAuthor(
+  authorId: string
+): Promise<PostWithAuthor[]> {
+  if (!authorId) {
+    return [];
+  }
+  return fetchVisiblePostsWithMeta({ authorId, limit: PROFILE_POSTS_LIMIT });
 }
 
 // ---------------------------------------------------------------------------
