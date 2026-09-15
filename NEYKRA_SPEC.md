@@ -295,8 +295,7 @@ Contraste suffisant sur les 5 univers, tailles de boutons raisonnables, états h
 ### Phase 2 — Profil & fil d'actualité (EN GRANDE PARTIE FAITE, voir manques ci-dessous)
 - [x] Création de post (texte + image/vidéo/gif) — validation serveur complète (2000 car., 5 Mo, MIME)
   - [ ] Manque : édition de post après publication, preview média avant envoi
-- [x] Fil d'actualité — RLS, réactions, commentaires
-  - [ ] Manque : pagination (actuellement limite dure à 50 posts, pas de "charger plus")
+- [x] Fil d'actualité — RLS, réactions, commentaires, pagination ("charger plus" par curseur created_at)
 - [x] Page de profil — vue publique + édition (display_name, bio, avatar)
   - [ ] Manque : affichage des posts de l'utilisateur sur son propre profil
 - [x] Likes + commentaires — 6 réactions manga (like/love/haha/wow/sad/fire), ajout de commentaire

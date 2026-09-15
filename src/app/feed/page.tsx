@@ -4,9 +4,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { LogoutButton } from "./logout-button";
 import { CreatePostForm } from "./create-post-form";
-import { PostCard } from "./post-card";
+import { FeedList } from "./feed-list";
 import { getFeedPosts } from "@/lib/posts/actions";
-import type { PostWithAuthor } from "@/lib/posts/types";
 
 export const metadata: Metadata = {
   title: "Fil d'actualite — NEYKRA",
@@ -23,12 +22,7 @@ export default async function FeedPage() {
     redirect("/login");
   }
 
-  const posts = await getFeedPosts();
-
-  const postsWithOwner = posts.map((p: PostWithAuthor) => ({
-    ...p,
-    isOwner: p.author_id === user.id,
-  }));
+  const { posts, hasMore } = await getFeedPosts();
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -58,7 +52,7 @@ export default async function FeedPage() {
           <CreatePostForm />
           <div className="border-t border-[var(--border)]" />
 
-          {postsWithOwner.length === 0 ? (
+          {posts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="font-display text-4xl text-[var(--accent)]">0</div>
               <h2 className="mt-3 font-display text-lg text-[var(--text-primary)]">
@@ -69,15 +63,11 @@ export default async function FeedPage() {
               </p>
             </div>
           ) : (
-            <div className="flex flex-col gap-6">
-              {postsWithOwner.map((post) => (
-                <PostCard
-                  key={post.id}
-                  post={post}
-                  isOwner={post.isOwner}
-                />
-              ))}
-            </div>
+            <FeedList
+              initialPosts={posts}
+              initialHasMore={hasMore}
+              currentUserId={user.id}
+            />
           )}
         </div>
       </main>

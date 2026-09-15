@@ -39,6 +39,18 @@ export type PostWithAuthor = PostRow & {
   comments?: CommentWithAuthor[];
 };
 
+/**
+ * Page de posts du fil (/feed) — pagination par curseur sur `created_at`.
+ * `posts` = page renvoyée, `hasMore` = reste-t-il des posts plus anciens
+ * (détecté côté serveur en sondant un post de plus que la limite demandée),
+ * `error` = renseigné si la requête a échoué (la page est alors vide).
+ */
+export type FeedPostsPage = {
+  posts: PostWithAuthor[];
+  hasMore: boolean;
+  error?: string;
+};
+
 export type CreatePostFormState = {
   error?: string;
   success?: string;

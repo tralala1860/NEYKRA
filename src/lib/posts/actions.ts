@@ -13,6 +13,7 @@ import type {
   DeletePostFormState,
   DeleteCommentFormState,
   PostWithAuthor,
+  FeedPostsPage,
   PostMediaType,
   CommentWithAuthor,
   ReactionCounts,
@@ -139,8 +140,19 @@ export async function createPost(
 // (RLS posts_select = soi / ami accepté / public non bloqué) avec tous les
 // métadonnées du fil : join profiles + otaku_status, réactions décomptées
 // par type, réaction de l'utilisateur courant, compteur + commentaires.
-// Utilisé par getFeedPosts (fil principal) et getPostsByAuthor (profil).
+// Utilisé par getFeedPosts / getMoreFeedPosts (fil principal) et
+// getPostsByAuthor (profil).
+//
+// Pagination : un post de plus que la limite demandée est récupéré (sonde)
+// puis retiré de la page renvoyée — s'il existe, c'est qu'il reste des posts
+// plus anciens (hasMore = true). Le curseur `before` filtre en
+// created_at < before (strictement), donc aucun doublon entre deux pages.
 // ---------------------------------------------------------------------------
+
+// Tailles de page du fil principal (/feed) : page initiale et pages suivantes.
+const FEED_PAGE_SIZE = 50;
+const FEED_MORE_PAGE_SIZE = 25;
+// La page profil garde une liste courte, non paginée (chantier séparé).
 const PROFILE_POSTS_LIMIT = 30;
 
 type FetchVisiblePostsOptions = {
@@ -148,18 +160,29 @@ type FetchVisiblePostsOptions = {
   authorId?: string | null;
   /** Limite du nombre de posts (null = pas de limite explicite). */
   limit?: number | null;
+  /**
+   * Curseur de pagination : ne renvoie que les posts créés STRICTEMENT avant
+   * cette date (ISO 8601) — typiquement le `created_at` du dernier post affiché.
+   */
+  before?: string | null;
+};
+
+type FetchVisiblePostsResult = {
+  posts: PostWithAuthor[];
+  hasMore: boolean;
+  error?: string;
 };
 
 async function fetchVisiblePostsWithMeta(
   options: FetchVisiblePostsOptions = {}
-): Promise<PostWithAuthor[]> {
+): Promise<FetchVisiblePostsResult> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return [];
+    return { posts: [], hasMore: false };
   }
 
   // posts_select RLS filtre déjà : auteur = soi, ami accepté, ou profil public non bloqué
@@ -184,22 +207,37 @@ async function fetchVisiblePostsWithMeta(
   if (options.authorId) {
     query = query.eq("author_id", options.authorId);
   }
+  // Curseur de pagination : strictement avant la date donnée.
+  if (options.before) {
+    query = query.lt("created_at", options.before);
+  }
   if (options.limit != null) {
-    query = query.limit(options.limit);
+    // Sonde : un post de plus que la page demandée, pour détecter hasMore.
+    query = query.limit(options.limit + 1);
   }
 
   const { data: posts, error } = await query;
 
   if (error) {
     console.error("fetchVisiblePostsWithMeta error:", error.message);
-    return [];
+    return {
+      posts: [],
+      hasMore: false,
+      error: "Impossible de charger les publications.",
+    };
   }
 
   if (!posts || posts.length === 0) {
-    return [];
+    return { posts: [], hasMore: false };
   }
 
-  const postIds = posts.map((p) => p.id);
+  // Le post de sonde (au-delà de la limite) est retiré de la page renvoyée :
+  // sa seule présence suffit à savoir qu'il reste des posts plus anciens.
+  const pageSize = options.limit ?? null;
+  const hasMore = pageSize != null && posts.length > pageSize;
+  const pageRows = pageSize != null ? posts.slice(0, pageSize) : posts;
+
+  const postIds = pageRows.map((p) => p.id);
 
   // Réactions des posts (type par ligne — compteurs par type + réaction perso).
   // La RLS likes_select filtre déjà la visibilité.
@@ -295,7 +333,7 @@ async function fetchVisiblePostsWithMeta(
     commentsMap.set(row.post_id, list);
   });
 
-  return posts.map((row) => {
+  const page = pageRows.map((row) => {
     const profiles = row.profiles as unknown as
       | {
           username: string;
@@ -322,23 +360,46 @@ async function fetchVisiblePostsWithMeta(
       comments: commentsMap.get(row.id) ?? [],
     };
   });
+
+  return { posts: page, hasMore };
 }
 
 
 
 // ---------------------------------------------------------------------------
-// Fil d'actualité : posts visibles par l'utilisateur connecté.
+// Fil d'actualité (/feed) — pagination par curseur sur created_at.
+// getFeedPosts : page initiale (50 posts les plus récents, comportement
+// historique conservé). getMoreFeedPosts : page suivante (25 posts créés
+// STRICTEMENT avant `before`, curseur = created_at du dernier post affiché).
+// Les deux renvoient `hasMore` (voir la sonde dans fetchVisiblePostsWithMeta).
 // ---------------------------------------------------------------------------
 
-export async function getFeedPosts(): Promise<PostWithAuthor[]> {
-  return fetchVisiblePostsWithMeta({ limit: 50 });
+export async function getFeedPosts(): Promise<FeedPostsPage> {
+  return fetchVisiblePostsWithMeta({ limit: FEED_PAGE_SIZE });
+}
+
+/**
+ * Page suivante du fil, strictement avant le curseur `before` (created_at au
+ * format ISO 8601 du dernier post affiché). Entrée validée : une Server Action
+ * est appelable directement en POST, on ne fait pas confiance au client.
+ * Un curseur invalide renvoie une page vide (le bouton disparaît) sans erreur.
+ */
+export async function getMoreFeedPosts(
+  before: string
+): Promise<FeedPostsPage> {
+  if (typeof before !== "string" || Number.isNaN(Date.parse(before))) {
+    return { posts: [], hasMore: false };
+  }
+  return fetchVisiblePostsWithMeta({ limit: FEED_MORE_PAGE_SIZE, before });
 }
 
 // ---------------------------------------------------------------------------
 // Posts d'un auteur précis (page profil) : même visibilité RLS que le fil
 // principal (le visiteur ne voit que les posts autorisés — ses propres posts
 // si c'est son profil, sinon selon public/ami/blocage). Tri date décroissante,
-// limite raisonnable de 30 (profil, pas le fil principal).
+// limite raisonnable de 30 (profil, pas le fil principal). Pas de pagination
+// ici : la page profil affiche les 30 derniers posts (chantier séparé), donc
+// seul le tableau de posts est conservé — la signature reste inchangée.
 // ---------------------------------------------------------------------------
 
 export async function getPostsByAuthor(
@@ -347,7 +408,11 @@ export async function getPostsByAuthor(
   if (!authorId) {
     return [];
   }
-  return fetchVisiblePostsWithMeta({ authorId, limit: PROFILE_POSTS_LIMIT });
+  const { posts } = await fetchVisiblePostsWithMeta({
+    authorId,
+    limit: PROFILE_POSTS_LIMIT,
+  });
+  return posts;
 }
 
 // ---------------------------------------------------------------------------
