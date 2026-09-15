@@ -10,7 +10,12 @@ import {
   getFriendshipState,
   type FriendshipState,
 } from "@/lib/friends/actions";
+import {
+  isBlockedByOrBlocking,
+  type BlockState,
+} from "@/lib/blocks/actions";
 import { FriendButton } from "./friend-button";
+import { BlockButton } from "./block-button";
 import { ProfileLinkButton } from "./profile-link-button";
 
 type ProfilePageProps = {
@@ -80,6 +85,12 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     user && !isOwn
       ? await getFriendshipState(profile.id)
       : { status: "none", friendshipId: null };
+
+  // État du blocage (aucun / j'ai bloqué / je suis bloqué) : pilote le
+  // bouton Bloquer/Débloquer et masque le bouton d'amitié si j'ai bloqué
+  // la personne (l'amitié est de toute façon supprimée par blockUser).
+  const blockState: BlockState =
+    user && !isOwn ? await isBlockedByOrBlocking(profile.id) : { status: "none" };
 
   const displayName = profile.display_name?.trim() || profile.username;
   const initial = (displayName[0] ?? "?").toUpperCase();
@@ -153,13 +164,25 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                   </ProfileLinkButton>
                 </div>
               ) : user ? (
-                <div>
+                <div className="flex flex-col gap-3">
                   {/* Relation d'amitié (demande / acceptation / refus /
                       retrait). Aucun bouton pour un visiteur non connecté :
-                      les actions exigent un compte. */}
-                  <FriendButton
+                      les actions exigent un compte. Masqué quand on a
+                      bloqué la personne (plus d'interaction possible). */}
+                  {blockState.status !== "i_blocked" ? (
+                    <FriendButton
+                      profileUsername={profile.username}
+                      initialState={friendship}
+                    />
+                  ) : null}
+
+                  {/* Blocage : bouton sobre (secondary), jamais sur son
+                      propre profil ; devient « Débloquer » si déjà bloqué ;
+                      reste neutre (rien) si c'est l'autre qui a bloqué. */}
+                  <BlockButton
                     profileUsername={profile.username}
-                    initialState={friendship}
+                    profileId={profile.id}
+                    initialState={blockState}
                   />
                 </div>
               ) : null}

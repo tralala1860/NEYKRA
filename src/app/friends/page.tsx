@@ -1,8 +1,10 @@
-// NEYKRA — Page /friends : 3 sections (amis, demandes reçues, demandes
-// envoyées) servies par getFriendsList/getPendingReceived/getPendingSent.
+// NEYKRA — Page /friends : 4 sections (amis, demandes reçues, demandes
+// envoyées, utilisateurs bloqués) servies par getFriendsList /
+// getPendingReceived / getPendingSent / getBlockedUsers.
 // Server Component protégé comme /feed (redirect /login sans session).
-// Chaque ligne est un FriendRequestActions (client) avec suppression
-// immédiate sans rechargement. Uniquement Card + tokens (§6.10).
+// Chaque ligne est un FriendRequestActions ou BlockedUserActions (client)
+// avec mise à jour immédiate sans rechargement. Uniquement Card + tokens
+// (§6.10).
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -13,8 +15,10 @@ import {
   getPendingReceived,
   getPendingSent,
 } from "@/lib/friends/actions";
+import { getBlockedUsers } from "@/lib/blocks/actions";
 import { Card } from "@/components/ui/Card";
 import { FriendRequestActions } from "./friend-request-actions";
+import { BlockedUserActions } from "./blocked-user-actions";
 
 export const metadata: Metadata = {
   title: "Amis — NEYKRA",
@@ -31,10 +35,11 @@ export default async function FriendsPage() {
     redirect("/login");
   }
 
-  const [friends, received, sent] = await Promise.all([
+  const [friends, received, sent, blocked] = await Promise.all([
     getFriendsList(),
     getPendingReceived(),
     getPendingSent(),
+    getBlockedUsers(),
   ]);
 
   return (
@@ -95,6 +100,16 @@ export default async function FriendsPage() {
               entry={entry}
               variant="sent"
             />
+          ))}
+        </FriendSection>
+
+        <FriendSection
+          title="Utilisateurs bloqués"
+          count={blocked.length}
+          emptyMessage="Personne de bloqué."
+        >
+          {blocked.map((profile) => (
+            <BlockedUserActions key={profile.id} profile={profile} />
           ))}
         </FriendSection>
       </div>

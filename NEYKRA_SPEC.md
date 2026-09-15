@@ -303,7 +303,7 @@ Contraste suffisant sur les 5 univers, tailles de boutons raisonnables, états h
 ### Phase 3 — Relations sociales
 - [x] Système d'amis (demande/acceptation, refus, retrait — bouton d'état sur la page de profil)
   - [x] Page listant les amis et les demandes en attente (`/friends` — Session 12)
-- [ ] Système de blocage
+- [x] Système de blocage (bloquer/débloquer sur le profil, exclusion posts/profils dans les deux sens, liste des bloqués dans /friends — Session 15) — **migration SQL 007 à exécuter manuellement dans le SQL Editor Supabase** + `src/lib/blocks/actions.ts` + UI (`block-button.tsx`, `blocked-user-actions.tsx`)
 - [ ] Recherche d'utilisateurs (barre de recherche)
 - [ ] Pages CGU / Politique de confidentialité (version simple)
 

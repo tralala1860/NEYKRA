@@ -317,7 +317,8 @@ as $$
     where p.id = target_post
       and (
         p.author_id = auth.uid()
-        or public.is_accepted_friend(p.author_id)
+        or (public.is_accepted_friend(p.author_id)
+            and not public.is_blocked(p.author_id))
         or (exists (
               select 1 from public.profiles pr
               where pr.id = p.author_id and pr.is_private = false
@@ -332,8 +333,20 @@ alter table public.profiles enable row level security;
 create policy "profiles_select" on public.profiles
   for select using (
     id = auth.uid()
-    or public.is_accepted_friend(id)
+    or (public.is_accepted_friend(id)
+        and not public.is_blocked(id))
     or (is_private = false and not public.is_blocked(id))
+  );
+-- Policy ADDITIVE (permissive → OR avec profiles_select) : le bloqueur
+-- doit voir les profils qu'IL a bloqués (getBlockedUsers : username /
+-- display_name / avatar_url), sinon profiles_select les masque dans les
+-- deux sens. Le bloqué, lui, ne voit toujours pas le bloqueur.
+create policy "profiles_select_blocked_by_me" on public.profiles
+  for select using (
+    exists (
+      select 1 from public.blocks b
+      where b.blocker_id = auth.uid() and b.blocked_id = profiles.id
+    )
   );
 -- L'insert est réalisé par le trigger (security definer) — politique par prudence :
 create policy "profiles_insert_own" on public.profiles
@@ -346,7 +359,8 @@ alter table public.posts enable row level security;
 create policy "posts_select" on public.posts
   for select using (
     author_id = auth.uid()
-    or public.is_accepted_friend(author_id)
+    or (public.is_accepted_friend(author_id)
+        and not public.is_blocked(author_id))
     or (exists (
           select 1 from public.profiles p
           where p.id = author_id and p.is_private = false
@@ -448,6 +462,10 @@ create policy "blocks_select" on public.blocks
   for select using (blocker_id = auth.uid() or blocked_id = auth.uid());
 create policy "blocks_insert_own" on public.blocks
   for insert with check (blocker_id = auth.uid());
+-- Seul le BLOQUEUR supprime sa ligne (débloquage) : sans cette policy,
+-- aucun utilisateur ne peut se débloquer lui-même (migration 007).
+create policy "blocks_delete_own" on public.blocks
+  for delete using (blocker_id = auth.uid());
 
 -- 6.10 quotes (contenu public non sensible)
 alter table public.quotes enable row level security;
