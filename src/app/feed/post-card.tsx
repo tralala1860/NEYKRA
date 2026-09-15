@@ -35,9 +35,11 @@ const REACTION_META: Record<ReactionType, { emoji: string; label: string }> = {
 type PostCardProps = {
   post: PostWithAuthor;
   isOwner: boolean;
+  /** Id de l'utilisateur connecté, pour les actions sur SES commentaires. */
+  currentUserId?: string | null;
 };
 
-export function PostCard({ post, isOwner }: PostCardProps) {
+export function PostCard({ post, isOwner, currentUserId }: PostCardProps) {
   const [pending, startTransition] = useTransition();
   const [reactions, setReactions] = useState<ReactionCounts>(
     post.reactions ?? {}
@@ -252,7 +254,10 @@ export function PostCard({ post, isOwner }: PostCardProps) {
 
       {/* Section commentaires */}
       <div className="mt-3 border-t border-[var(--border)] pt-3">
-        <CommentList comments={post.comments ?? []} />
+        <CommentList
+          comments={post.comments ?? []}
+          currentUserId={currentUserId}
+        />
         <CommentForm postId={post.id} />
       </div>
 

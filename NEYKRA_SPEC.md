@@ -297,9 +297,7 @@ Contraste suffisant sur les 5 univers, tailles de boutons raisonnables, états h
   - [ ] Manque : édition de post après publication, preview média avant envoi
 - [x] Fil d'actualité — RLS, réactions, commentaires, pagination ("charger plus" par curseur created_at)
 - [x] Page de profil — vue publique + édition (display_name, bio, avatar)
-  - [ ] Manque : affichage des posts de l'utilisateur sur son propre profil
 - [x] Likes + commentaires — 6 réactions manga (like/love/haha/wow/sad/fire), ajout de commentaire
-  - [ ] Manque : deleteComment existe côté serveur (src/lib/posts/actions.ts) mais n'est jamais branché à l'UI — bouton de suppression de commentaire à ajouter dans comment-list.tsx
   - [ ] Manque : édition de commentaire
 
 ### Phase 3 — Relations sociales

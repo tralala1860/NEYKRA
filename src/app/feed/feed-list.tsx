@@ -77,6 +77,7 @@ export function FeedList({
           key={post.id}
           post={post}
           isOwner={post.author_id === currentUserId}
+          currentUserId={currentUserId}
         />
       ))}
 

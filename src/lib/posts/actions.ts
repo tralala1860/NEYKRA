@@ -606,7 +606,11 @@ export async function deletePost(
 }
 
 // ---------------------------------------------------------------------------
-// Suppression d'un commentaire (uniquement par l'auteur — policy comments_delete_own).
+// Suppression d'un commentaire — uniquement par SON AUTEUR.
+// RLS comments_delete_own : for delete using (author_id = auth.uid()).
+// L'auteur du post n'a aucun droit de suppression sur les commentaires des
+// autres (aucune policy de modération) : l'UI ne propose donc le bouton qu'à
+// l'auteur du commentaire.
 // ---------------------------------------------------------------------------
 
 export async function deleteComment(
@@ -621,15 +625,32 @@ export async function deleteComment(
     return { error: "Non connecté." };
   }
 
-  const { error } = await supabase
+  if (!commentId) {
+    return { error: "Commentaire invalide." };
+  }
+
+  // Double verrou volontaire : le filtre author_id (défense en profondeur) ET
+  // la policy comments_delete_own côté Postgres. `.select("id")` renvoie les
+  // lignes réellement supprimées : PostgREST ne lève AUCUNE erreur quand la RLS
+  // bloque la suppression (ou que la ligne n'existe plus), on validerait donc un
+  // faux succès — et l'UI retirerait un commentaire toujours présent en base.
+  const { data, error } = await supabase
     .from("comments")
     .delete()
     .eq("id", commentId)
-    .eq("author_id", user.id);
+    .eq("author_id", user.id)
+    .select("id");
 
   if (error) {
     console.error("deleteComment error:", error.message);
     return { error: "Impossible de supprimer le commentaire." };
+  }
+
+  if (!data || data.length === 0) {
+    return {
+      error:
+        "Suppression impossible : ce commentaire n'existe plus ou ne t'appartient pas.",
+    };
   }
 
   revalidatePath("/feed");

@@ -163,12 +163,17 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
         {posts.length === 0 ? (
           <p className="mt-4 text-sm text-[var(--text-tertiary)]">
-            Aucune publication pour l'instant.
+            Aucune publication pour l&apos;instant.
           </p>
         ) : (
           <div className="mt-4 flex flex-col gap-6">
             {posts.map((post) => (
-              <PostCard key={post.id} post={post} isOwner={isOwn} />
+              <PostCard
+                key={post.id}
+                post={post}
+                isOwner={isOwn}
+                currentUserId={user?.id}
+              />
             ))}
           </div>
         )}
