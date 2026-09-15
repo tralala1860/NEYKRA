@@ -744,3 +744,28 @@ html.transitioning {
 .neykra-btn-hero:hover {
   filter: drop-shadow(3px 3px 0 var(--neykra-accent-glow));
 }
+
+/* --- 6. Bulle de dialogue BD (commentaires) ---
+ * La Card du commentaire reçoit .neykra-bubble : coins arrondis (rounded-xl
+ * déjà présent) + pointe vers l'avatar de l'auteur via ::before losange
+ * rotaté — fond var(--surface), bordure assortie à celle du panel
+ * (2px var(--text-primary), cf. .neykra-panel). Que des tokens → 5 univers. */
+.neykra-bubble > .neykra-panel {
+  position: relative;
+  /* Padding interne confortable (py-3 px-4) : la bulle habille, le texte respire */
+  padding: 0.75rem 1rem;
+}
+
+.neykra-bubble > .neykra-panel::before {
+  content: "";
+  position: absolute;
+  left: -8px;
+  top: 13px;
+  width: 14px;
+  height: 14px;
+  background: var(--surface);
+  border-left: 2px solid var(--text-primary);
+  border-bottom: 2px solid var(--text-primary);
+  transform: rotate(45deg);
+  border-bottom-left-radius: 2px;
+}
