@@ -301,7 +301,8 @@ Contraste suffisant sur les 5 univers, tailles de boutons raisonnables, états h
   - [ ] Manque : édition de commentaire
 
 ### Phase 3 — Relations sociales
-- [ ] Système d'amis (demande/acceptation)
+- [x] Système d'amis (demande/acceptation, refus, retrait — bouton d'état sur la page de profil)
+  - [ ] Manque : page listant les amis et les demandes en attente (chantier séparé)
 - [ ] Système de blocage
 - [ ] Recherche d'utilisateurs (barre de recherche)
 - [ ] Pages CGU / Politique de confidentialité (version simple)

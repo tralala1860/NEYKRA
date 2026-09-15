@@ -6,6 +6,11 @@ import { getPostsByAuthor } from "@/lib/posts/actions";
 import { PostCard } from "@/app/feed/post-card";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import {
+  getFriendshipState,
+  type FriendshipState,
+} from "@/lib/friends/actions";
+import { FriendButton } from "./friend-button";
 import { ProfileLinkButton } from "./profile-link-button";
 
 type ProfilePageProps = {
@@ -68,6 +73,13 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   // Posts de cet utilisateur, visibles selon la même RLS que le fil principal.
   const posts = await getPostsByAuthor(profile.id);
+
+  // État de la relation d'amitié : inutile si c'est son propre profil ou si
+  // personne n'est connecté (aucun bouton affiché dans ces deux cas).
+  const friendship: FriendshipState =
+    user && !isOwn
+      ? await getFriendshipState(profile.id)
+      : { status: "none", friendshipId: null };
 
   const displayName = profile.display_name?.trim() || profile.username;
   const initial = (displayName[0] ?? "?").toUpperCase();
@@ -139,6 +151,16 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                   <ProfileLinkButton href="/profile/edit" variant="primary">
                     Modifier le profil
                   </ProfileLinkButton>
+                </div>
+              ) : user ? (
+                <div>
+                  {/* Relation d'amitié (demande / acceptation / refus /
+                      retrait). Aucun bouton pour un visiteur non connecté :
+                      les actions exigent un compte. */}
+                  <FriendButton
+                    profileUsername={profile.username}
+                    initialState={friendship}
+                  />
                 </div>
               ) : null}
             </div>

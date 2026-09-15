@@ -384,9 +384,13 @@ create policy "friendships_select" on public.friendships
   for select using (user_id = auth.uid() or friend_id = auth.uid());
 create policy "friendships_insert_own" on public.friendships
   for insert with check (user_id = auth.uid());
-create policy "friendships_update_participant" on public.friendships
-  for update using (user_id = auth.uid() or friend_id = auth.uid())
-  with check (user_id = auth.uid() or friend_id = auth.uid());
+-- Seul le DESTINATAIRE (friend_id) peut accepter une demande. La version
+-- d'origine de cette policy autorisait les deux parties, ce qui permettait au
+-- demandeur de s'auto-accepter via l'API REST : durci par la migration
+-- supabase/migrations/006_friendships_rls.sql (à exécuter dans Supabase).
+create policy "friendships_update_recipient" on public.friendships
+  for update using (friend_id = auth.uid())
+  with check (friend_id = auth.uid());
 create policy "friendships_delete_participant" on public.friendships
   for delete using (user_id = auth.uid() or friend_id = auth.uid());
 
