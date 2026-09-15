@@ -769,3 +769,33 @@ html.transitioning {
   transform: rotate(45deg);
   border-bottom-left-radius: 2px;
 }
+
+/* --- 7. Post texte seul : mise en valeur façon citation (sans média) ---
+ * Dégradé d'encre TRÈS discret (accent-1/2 à ~6-8% via color-mix, zéro SVG,
+ * zéro animation) — une ambiance derrière le texte, jamais par-dessus.
+ * Taille fluide (clamp 18→24px) : lisible sur une punchline comme sur un
+ * pavé, toujours centré, contraste fort via var(--text-primary). */
+.neykra-quote {
+  text-align: center;
+  color: var(--text-primary);
+  font-size: clamp(1.125rem, 1rem + 1vw, 1.5rem);
+  line-height: 1.6;
+  padding: 1.5rem 1.25rem;
+  border-radius: 0.75rem;
+}
+
+@supports (background: color-mix(in srgb, red 50%, blue)) {
+  .neykra-quote {
+    background:
+      radial-gradient(
+        ellipse at 25% 20%,
+        color-mix(in srgb, var(--neykra-accent-1) 8%, transparent),
+        transparent 65%
+      ),
+      radial-gradient(
+        ellipse at 75% 80%,
+        color-mix(in srgb, var(--neykra-accent-2) 6%, transparent),
+        transparent 65%
+      );
+  }
+}

@@ -118,12 +118,17 @@ export function PostCard({ post, isOwner }: PostCardProps) {
         </div>
       </div>
 
-      {/* Contenu texte */}
-      {post.content && (
-        <p className="mt-4 text-[var(--text-primary)] whitespace-pre-wrap break-words">
-          {post.content}
-        </p>
-      )}
+      {/* Contenu texte — mis en valeur (citation) si le post n'a pas de média */}
+      {post.content &&
+        (post.media_url ? (
+          <p className="mt-4 text-[var(--text-primary)] whitespace-pre-wrap break-words">
+            {post.content}
+          </p>
+        ) : (
+          <div className="neykra-quote mt-4 whitespace-pre-wrap break-words">
+            {post.content}
+          </div>
+        ))}
 
       {/* Média */}
       {post.media_url && post.media_type && (
