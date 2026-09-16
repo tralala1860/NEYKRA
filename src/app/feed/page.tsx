@@ -37,6 +37,12 @@ export default async function FeedPage() {
 
           <div className="flex items-center gap-4">
             <Link
+              href="/search"
+              className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
+            >
+              Rechercher
+            </Link>
+            <Link
               href="/friends"
               className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
             >

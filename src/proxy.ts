@@ -52,7 +52,9 @@ export async function proxy(request: NextRequest) {
     pathname === "/profile/edit" ||
     pathname.startsWith("/profile/edit/") ||
     pathname === "/friends" ||
-    pathname.startsWith("/friends/");
+    pathname.startsWith("/friends/") ||
+    pathname === "/search" ||
+    pathname.startsWith("/search/");
   const isAuthPage = pathname === "/login" || pathname === "/signup";
 
   if (isProtectedPage && !user) {
