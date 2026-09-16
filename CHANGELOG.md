@@ -3,6 +3,11 @@
 > À mettre à jour à la fin de chaque session de développement (Claude Code, Cline ou autre).
 > Format : date, ce qui a été fait, ce qui reste à faire / bugs connus.
 
+## [15/09/2026] — Point de suivi — Phase 3 quasi-close
+
+- Phase 3 terminée à l'exception des pages CGU / Politique de confidentialité, volontairement reportées (nécessitent une relecture juridique avant tout lancement public, vu le public mineur et les données personnelles collectées). Amis, blocage et recherche d'utilisateurs livrés et validés (sessions 11, 12, 15, 16).
+- Prochaine étape à discuter : Phase 4 (messagerie temps réel) ou traitement des CGU en dehors d'une session de code classique.
+
 ## [15/09/2026] — Session 16 — Recherche d'utilisateurs : page /search + barre de recherche (Phase 3)
 
 - **Choix d'organisation** : Server Action dans un **nouveau fichier `src/lib/search/actions.ts`** (et non `profile/actions.ts`, dédié au profil courant : lecture par username exact, édition, upload d'avatar) — la recherche globale est un domaine à part, symétrique de `friends/` et `blocks/`.

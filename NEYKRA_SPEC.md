@@ -306,6 +306,7 @@ Contraste suffisant sur les 5 univers, tailles de boutons raisonnables, états h
 - [x] Système de blocage (bloquer/débloquer sur le profil, exclusion posts/profils dans les deux sens, liste des bloqués dans /friends — Session 15) — **migration SQL 007 à exécuter manuellement dans le SQL Editor Supabase** + `src/lib/blocks/actions.ts` + UI (`block-button.tsx`, `blocked-user-actions.tsx`)
 - [x] Recherche d'utilisateurs (barre de recherche — Session 16) : page `/search` (formulaire GET, Server Component protégé), `src/lib/search/actions.ts` — `searchUsers` (ilike username/display_name, limite 20, soi-même exclu, < 2 caractères → vide), filtrage de visibilité délégué à la RLS profiles ; lien « Rechercher » dans l'en-tête de `/feed`
 - [ ] Pages CGU / Politique de confidentialité (version simple)
+  - Note (15/09/2026) : volontairement reportée. Nécessite une relecture juridique avant lancement public (public incluant des mineurs, collecte de données personnelles — cf. §5). Rédaction possible en session dédiée mais pas suffisante seule pour un vrai lancement.
 
 ### Phase 4 — Messagerie temps réel
 - [ ] Conversations 1-to-1
